@@ -1,19 +1,20 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin-auth';
 import { sendOrderStatusEmail } from '@/lib/email';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 export async function GET(
   _request: Request,
   { params }: { params: { orderId: string } }
 ) {
   try {
-    const { data: order, error } = await supabase
+    const { data: order, error } = await getSupabase()
       .from('orders')
       .select('*')
       .eq('order_id', params.orderId)
@@ -23,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    const { data: items, error: itemsError } = await supabase
+    const { data: items, error: itemsError } = await getSupabase()
       .from('order_items')
       .select('*')
       .eq('order_id', params.orderId);
@@ -43,7 +44,7 @@ export async function DELETE(
   try {
     const auth = await requireAdmin();
     if (auth) return auth;
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('orders')
       .delete()
       .eq('order_id', params.orderId);
@@ -63,7 +64,7 @@ export async function PATCH(
     const auth = await requireAdmin();
     if (auth) return auth;
     const body = await request.json();
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('orders')
       .update({ order_status: body.status })
       .eq('order_id', params.orderId)
@@ -81,13 +82,13 @@ export async function PATCH(
       const isCod = data.payment_method === 'cod';
       (async () => {
         try {
-          const { data: items } = await supabase
+          const { data: items } = await getSupabase()
             .from('order_items')
             .select('*')
             .eq('order_id', orderId);
 
           let brand: { email: string; brand: string; address: string } | undefined;
-          const { data: configs } = await supabase.from('site_config').select('*');
+          const { data: configs } = await getSupabase().from('site_config').select('*');
           const site = configs?.find((c) => c.key === 'site');
           if (site?.value) brand = { email: site.value.email, brand: site.value.brand, address: site.value.address };
 

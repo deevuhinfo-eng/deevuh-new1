@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { payuConfig, verifyPayuHash } from '@/lib/payu';
 import { sendCustomerOrderConfirmation, sendMerchantOrderNotification } from '@/lib/email';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 const COD_FEE = 149;
 
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
     const hashValid = hash === expectedHash;
 
     // Load pending order
-    const { data: orderRow } = await supabase.from('orders').select('*').eq('order_id', orderId).single();
+    const { data: orderRow } = await getSupabase().from('orders').select('*').eq('order_id', orderId).single();
 
     if (!orderRow) {
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/order-confirmation?orderId=${orderId}`);
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
       updates.notes = prevNotes ? `${prevNotes} ${payuLine}` : payuLine;
     }
 
-    const { error: updateError } = await supabase.from('orders').update(updates).eq('order_id', orderId);
+    const { error: updateError } = await getSupabase().from('orders').update(updates).eq('order_id', orderId);
     if (updateError) console.error('order update failed:', updateError.message);
 
     if (success) {
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
     }
 
     // Build email payload
-    const { data: items } = await supabase.from('order_items').select('*').eq('order_id', orderId);
+    const { data: items } = await getSupabase().from('order_items').select('*').eq('order_id', orderId);
 
     const emailPayload = {
       orderId,
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
       try {
         let brand: { email: string; brand: string; address: string } | undefined;
         let merchantEmail: string | undefined;
-        const { data: configs } = await supabase.from('site_config').select('*');
+        const { data: configs } = await getSupabase().from('site_config').select('*');
         const site = configs?.find((c) => c.key === 'site');
         if (site?.value) {
           merchantEmail = site.value.email;
@@ -144,18 +145,18 @@ export async function POST(request: Request) {
 
 async function decrementStock(orderId: string) {
   try {
-    const { data: items } = await supabase.from('order_items').select('product_id, quantity').eq('order_id', orderId);
+    const { data: items } = await getSupabase().from('order_items').select('product_id, quantity').eq('order_id', orderId);
     if (!items?.length) return;
 
     for (const item of items) {
-      const { data: product } = await supabase
+      const { data: product } = await getSupabase()
         .from('products')
         .select('id, stock')
         .eq('id', item.product_id)
         .single();
       if (product) {
         const newStock = Math.max(0, Number(product.stock) - Number(item.quantity));
-        await supabase
+        await getSupabase()
           .from('products')
           .update({ stock: newStock })
           .eq('id', item.product_id);

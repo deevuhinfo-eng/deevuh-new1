@@ -1,18 +1,19 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin-auth';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 export async function GET() {
   try {
     const auth = await requireAdmin();
     if (auth) return auth;
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('orders')
       .select('*')
       .order('placed_at', { ascending: false });
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
     const auth = await requireAdmin();
     if (auth) return auth;
     const body = await request.json();
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('orders')
       .insert({
         order_id: body.orderId,
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
         color: item.color,
         quantity: item.quantity,
       }));
-      await supabase.from('order_items').insert(orderItems);
+      await getSupabase().from('order_items').insert(orderItems);
     }
 
     return NextResponse.json({ order: data });

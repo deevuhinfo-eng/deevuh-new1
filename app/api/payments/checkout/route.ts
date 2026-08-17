@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { getAdminSession } from '@/lib/admin-auth';
 import { payuConfig, generatePayuHash, formatPayuAmount } from '@/lib/payu';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 const PG_MODE_MAP: Record<string, { pg?: string; bankcode?: string }> = {
   upi: { pg: 'UPI', bankcode: 'UPI' },
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
 
     // Client already builds the full note (includes COD fee info). Fallback for safety.
     const notes = body.notes || form.notes || null;
-    const { error: orderError } = await supabase.from('orders').insert({
+    const { error: orderError } = await getSupabase().from('orders').insert({
       order_id: orderId,
       txn_id: txnId,
       customer_id: userId,
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
     }
 
     if (items?.length) {
-      await supabase.from('order_items').insert(
+      await getSupabase().from('order_items').insert(
         items.map((item: any) => ({
           order_id: orderId,
           product_id: item.productId,

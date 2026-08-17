@@ -1,11 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin-auth';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 const MAX_SIZE = 300 * 1024;
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -34,14 +35,14 @@ export async function POST(request: Request) {
     const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${EXT[file.type]}`;
     const path = `products/${name}`;
 
-    const { error } = await supabase.storage.from('images').upload(path, buffer, {
+    const { error } = await getSupabase().storage.from('images').upload(path, buffer, {
       contentType: file.type,
       cacheControl: '3600',
       upsert: false,
     });
     if (error) throw error;
 
-    const { data } = supabase.storage.from('images').getPublicUrl(path);
+    const { data } = getSupabase().storage.from('images').getPublicUrl(path);
     return NextResponse.json({ success: true, url: data.publicUrl });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

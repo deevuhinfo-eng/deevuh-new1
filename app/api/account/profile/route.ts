@@ -1,11 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { getAdminSession } from '@/lib/admin-auth';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 export async function GET() {
   try {
@@ -19,7 +20,7 @@ export async function GET() {
     const avatar = meta.avatar_url || meta.picture || meta.avatar || '';
 
     // Upsert profile (auto-create on first visit)
-    await supabase.from('profiles').upsert(
+    await getSupabase().from('profiles').upsert(
       {
         id: userId,
         email,
@@ -30,7 +31,7 @@ export async function GET() {
       { onConflict: 'id' }
     );
 
-    const { data: profile, error } = await supabase
+    const { data: profile, error } = await getSupabase()
       .from('profiles')
       .select('*')
       .eq('id', userId)
@@ -55,7 +56,7 @@ export async function PUT(request: Request) {
       if (typeof body[f] === 'string') update[f] = body[f].trim();
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('profiles')
       .update(update)
       .eq('id', session.user.id)

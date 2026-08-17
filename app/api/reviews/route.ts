@@ -1,16 +1,17 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { reviews as fallbackReviews } from '@/lib/config';
 import type { ReviewRow } from '@/lib/supabase/types';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('reviews')
       .select('*')
       .order('date', { ascending: false });

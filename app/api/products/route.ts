@@ -1,15 +1,16 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { products as fallbackProducts } from '@/lib/products';
 import type { ProductRow } from '@/lib/supabase/types';
 import { mapProduct, toRow } from '@/lib/supabase/mappers';
 import type { Product } from '@/lib/types';
 import { requireAdmin } from '@/lib/admin-auth';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 const COMBO_MARKER = '__combo';
 
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
 
   try {
     if (slug) {
-      const { data, error } = await supabase
+      const { data, error } = await getSupabase()
         .from('products')
         .select('*')
         .eq('slug', slug)
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ products: data ? mapProduct(data) : null });
     }
 
-    let query = supabase.from('products').select('*');
+    let query = getSupabase().from('products').select('*');
     if (!all) query = query.eq('hidden', false);
 
     if (category) query = query.eq('category', category);
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
     if (auth) return auth;
     const body: Product = await request.json();
     const payload = toRow(body);
-    const { error } = await supabase.from('products').upsert(payload, { onConflict: 'id' });
+    const { error } = await getSupabase().from('products').upsert(payload, { onConflict: 'id' });
     if (error) throw error;
     return NextResponse.json({ success: true, product: body });
   } catch (e: any) {
@@ -93,7 +94,7 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
-    const { error } = await supabase.from('products').delete().eq('id', id);
+    const { error } = await getSupabase().from('products').delete().eq('id', id);
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (e: any) {

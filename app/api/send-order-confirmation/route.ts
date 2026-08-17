@@ -1,12 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { sendCustomerOrderConfirmation, sendMerchantOrderNotification } from '@/lib/email';
 import { requireAdmin } from '@/lib/admin-auth';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     let brand: { email: string; brand: string; address: string } | undefined;
 
     try {
-      const { data } = await supabase.from('site_config').select('*');
+      const { data } = await getSupabase().from('site_config').select('*');
       const config = data?.find((d) => d.key === 'site');
       if (config?.value) {
         merchantEmail = config.value.email;
@@ -33,14 +34,14 @@ export async function POST(request: Request) {
     // If only orderId given, build the full payload from the database.
     let payload = body;
     if (body.orderId && !body.items) {
-      const { data: order } = await supabase
+      const { data: order } = await getSupabase()
         .from('orders')
         .select('*')
         .eq('order_id', body.orderId)
         .single();
       if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 });
 
-      const { data: items } = await supabase
+      const { data: items } = await getSupabase()
         .from('order_items')
         .select('*')
         .eq('order_id', body.orderId);

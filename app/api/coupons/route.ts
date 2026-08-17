@@ -1,17 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
+import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin';
 import { coupons as fallbackCoupons } from '@/lib/config';
 import type { CouponRow } from '@/lib/supabase/types';
 import { requireAdmin } from '@/lib/admin-auth';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+let supabase: ReturnType<typeof createSupabaseClient> | null = null;
+function getSupabase() {
+  if (!supabase) supabase = createSupabaseClient();
+  return supabase;
+}
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabase()
       .from('coupons')
       .select('*')
       .eq('active', true);
@@ -28,7 +29,7 @@ export async function POST(request: Request) {
     const auth = await requireAdmin();
     if (auth) return auth;
     const body = await request.json();
-    const { error } = await supabase.from('coupons').upsert(
+    const { error } = await getSupabase().from('coupons').upsert(
       {
         code: body.code.toUpperCase(),
         type: body.type,
@@ -52,7 +53,7 @@ export async function DELETE(request: Request) {
     const auth = await requireAdmin();
     if (auth) return auth;
     const body = await request.json();
-    const { error } = await supabase
+    const { error } = await getSupabase()
       .from('coupons')
       .delete()
       .eq('code', body.code);

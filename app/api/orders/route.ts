@@ -1,0 +1,80 @@
+import { createClient } from '@supabase/supabase-js';
+import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/admin-auth';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+export async function GET() {
+  try {
+    const auth = await requireAdmin();
+    if (auth) return auth;
+
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('placed_at', { ascending: false });
+
+    if (error) throw error;
+    return NextResponse.json({ orders: data });
+  } catch {
+    return NextResponse.json({ orders: [] });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const auth = await requireAdmin();
+    if (auth) return auth;
+    const body = await request.json();
+    const { data, error } = await supabase
+      .from('orders')
+      .insert({
+        order_id: body.orderId,
+        txn_id: body.txnId,
+        customer_name: body.customerName || body.name,
+        customer_email: body.customerEmail || body.email,
+        customer_phone: body.customerPhone || body.phone,
+        address: body.address,
+        city: body.city,
+        state: body.state,
+        country: body.country,
+        pincode: body.pincode,
+        notes: body.notes ? (body.paymentMethod === 'cod' ? `${body.notes} [COD Fee: ₹${body.codFee ?? 149} paid, ₹${body.dueOnDelivery ?? 0} due on delivery]` : body.notes) : (body.paymentMethod === 'cod' ? `[COD Fee: ₹${body.codFee ?? 149} paid, ₹${body.dueOnDelivery ?? 0} due on delivery]` : null),
+        payment_method: body.paymentMethod,
+        subtotal: body.subtotal,
+        discount: body.discount || 0,
+        shipping: body.shipping || 0,
+        tax: body.tax || 0,
+        grand_total: body.grandTotal,
+        coupon_code: body.couponCode || null,
+        order_status: 'pending',
+        placed_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Insert order items
+    if (body.items?.length) {
+      const orderItems = body.items.map((item: any) => ({
+        order_id: body.orderId,
+        product_id: item.productId,
+        name: item.name,
+        price: item.price,
+        image: item.image || '',
+        size: item.size,
+        color: item.color,
+        quantity: item.quantity,
+      }));
+      await supabase.from('order_items').insert(orderItems);
+    }
+
+    return NextResponse.json({ order: data });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
+}

@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 38 30% 98%;
+    --foreground: 20 14% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 10%;
+    --primary: 20 14% 10%;
+    --primary-foreground: 38 30% 98%;
+    --secondary: 38 24% 94%;
+    --secondary-foreground: 20 14% 10%;
+    --muted: 38 20% 94%;
+    --muted-foreground: 20 8% 44%;
+    --accent: 38 35% 88%;
+    --accent-foreground: 20 14% 10%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 60% 38%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 48%;
+    --warning-foreground: 20 14% 10%;
+    --border: 30 18% 86%;
+    --input: 30 18% 86%;
+    --ring: 20 14% 30%;
+    --chart-1: 20 60% 48%;
+    --chart-2: 142 50% 42%;
+    --chart-3: 200 60% 44%;
+    --chart-4: 38 88% 56%;
+    --chart-5: 340 60% 50%;
+    --radius: 0.75rem;
+  }
+  .dark {
+    --background: 20 14% 6%;
+    --foreground: 38 30% 96%;
+    --card: 20 14% 9%;
+    --card-foreground: 38 30% 96%;
+    --popover: 20 14% 9%;
+    --popover-foreground: 38 30% 96%;
+    --primary: 38 30% 96%;
+    --primary-foreground: 20 14% 6%;
+    --secondary: 20 10% 14%;
+    --secondary-foreground: 38 30% 96%;
+    --muted: 20 10% 14%;
+    --muted-foreground: 38 12% 62%;
+    --accent: 20 10% 18%;
+    --accent-foreground: 38 30% 96%;
+    --destructive: 0 62% 42%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 55% 44%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 88% 56%;
+    --warning-foreground: 20 14% 6%;
+    --border: 20 10% 18%;
+    --input: 20 10% 18%;
+    --ring: 38 30% 70%;
+    --chart-1: 38 70% 58%;
+    --chart-2: 142 50% 48%;
+    --chart-3: 200 60% 54%;
+    --chart-4: 38 88% 62%;
+    --chart-5: 340 60% 56%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+  body { @apply bg-background text-foreground font-sans; text-rendering: optimizeLegibility; }
+  ::selection { background: hsl(var(--foreground)); color: hsl(var(--background)); }
+  h1, h2, h3, h4 { @apply font-display tracking-tight; line-height: 1.1; }
+}
+
+@layer components {
+  .glass { @apply bg-background/60 backdrop-blur-xl border border-border/50; }
+  .glass-strong { @apply bg-background/80 backdrop-blur-2xl border border-border/60; }
+  .container-lux { @apply mx-auto w-full max-w-[1320px] px-6 md:px-10; }
+  .eyebrow { @apply text-xs font-medium uppercase tracking-[0.3em] text-muted-foreground; }
+  .heading-1 { @apply font-display text-5xl leading-[0.95] tracking-tight md:text-7xl lg:text-8xl; }
+  .heading-2 { @apply font-display text-4xl leading-[1] tracking-tight md:text-6xl; }
+  .heading-3 { @apply font-display text-3xl leading-[1.05] tracking-tight md:text-5xl; }
+  .link-underline { @apply relative after:absolute after:bottom-0 after:left-0 after:h-px after:w-0 after:bg-current after:transition-all after:duration-500 hover:after:w-full; }
+  .btn-lux { @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-8 py-4 text-xs font-medium uppercase tracking-[0.2em] transition-all duration-500; }
+  .skeleton { @apply relative overflow-hidden bg-muted; }
+  .skeleton::after { content: ''; @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-foreground/10 to-transparent; }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .perspective { perspective: 1200px; }
+  .preserve-3d { transform-style: preserve-3d; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .mask-fade-r { mask-image: linear-gradient(to right, black 80%, transparent 100%); }
+  .mask-fade-b { mask-image: linear-gradient(to bottom, black 80%, transparent 100%); }
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: hsl(var(--background)); }
+::-webkit-scrollbar-thumb { background: hsl(var(--muted-foreground) / 0.4); border-radius: 999px; border: 2px solid hsl(var(--background)); }
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.6); }
+
+.cursor-glow-bg {
+  position: fixed; width: 400px; height: 400px; border-radius: 50%;
+  pointer-events: none; z-index: 9997;
+  background: radial-gradient(circle, hsl(var(--foreground) / 0.05) 0%, transparent 60%);
+  transition: opacity 0.4s ease;
+  will-change: transform;
+}
+.cursor-glow-ring {
+  position: fixed; top: 0; left: 0; border-radius: 50%;
+  pointer-events: none; z-index: 9999;
+  border: 1.5px solid hsl(var(--foreground) / 0.25);
+  box-shadow: 0 0 8px hsl(var(--foreground) / 0.08), inset 0 0 8px hsl(var(--foreground) / 0.04);
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.3s ease,
+              background-color 0.3s ease;
+  will-change: transform;
+}
+.cursor-glow-dot {
+  position: fixed; top: 0; left: 0; width: 8px; height: 8px; border-radius: 50%;
+  pointer-events: none; z-index: 9999;
+  background: hsl(var(--foreground));
+  box-shadow: 0 0 0 1.5px hsl(var(--background)), 0 0 0 3.5px hsl(var(--foreground) / 0.15), 0 0 10px hsl(var(--foreground) / 0.2);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.2s ease;
+  will-change: transform;
+}
+@media (max-width: 768px) {
+  .cursor-glow-bg, .cursor-glow-ring, .cursor-glow-dot { display: none; }
+}
+
+.zoom-container:hover .zoom-img { transform: scale(1.08); }
+.zoom-img { transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+
+input[type='range'] { accent-color: hsl(var(--foreground)); }
+
+@media (min-width: 769px) and (hover: hover) {
+  .cursor-glow-active * { cursor: none; }
+  .cursor-glow-active a, .cursor-glow-active button,
+  .cursor-glow-active input, .cursor-glow-active select,
+  .cursor-glow-active textarea, .cursor-glow-active [role="button"],
+  .cursor-glow-active .btn-lux { cursor: none; }
+}

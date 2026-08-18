@@ -69,7 +69,7 @@ export function MobileBottomNav({ onCart, onWishlist, onSearch }: { onCart: () =
 export function WhatsAppButton() {
   return (
     <a
-      href="https://wa.me/12125550148"
+      href="https://wa.me/917827537480"
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-20 left-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-110 md:bottom-6 md:left-6"

@@ -4,12 +4,12 @@ import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { SiteShell } from '@/components/site-shell';
 import { ProductCard } from '@/components/product-card';
-import { products, categoryLabels } from '@/lib/products';
+import { products as fallbackProducts, categoryLabels } from '@/lib/products';
 import { formatPrice } from '@/lib/format';
 import { SlidersHorizontal, X, Search, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import type { ProductCategory } from '@/lib/types';
+import type { Product, ProductCategory } from '@/lib/types';
 
 const sortOptions = [
   { value: 'newest', label: 'Newest' },
@@ -18,9 +18,9 @@ const sortOptions = [
   { value: 'price-desc', label: 'Price: High to Low' },
 ];
 
-const allColors = Array.from(new Set(products.flatMap((p) => p.variants.map((v) => v.color))));
-const allSizes = Array.from(new Set(products.flatMap((p) => p.sizes.map((s) => s.name))));
-const maxPrice = Math.max(...products.map((p) => p.price));
+const allColors = Array.from(new Set(fallbackProducts.flatMap((p) => p.variants.map((v) => v.color))));
+const allSizes = Array.from(new Set(fallbackProducts.flatMap((p) => p.sizes.map((s) => s.name))));
+const maxPrice = Math.max(...fallbackProducts.map((p) => p.price));
 
 export default function ShopPage() {
   return (
@@ -33,14 +33,28 @@ export default function ShopPage() {
 function ShopPageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>(() => fallbackProducts.filter((p) => !p.hidden));
   const [showFilters, setShowFilters] = useState(false);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string | null>(searchParams.get('category'));
   const [tag, setTag] = useState<string | null>(searchParams.get('tag'));
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest');
+
+  const allColors = useMemo(() => Array.from(new Set(products.flatMap((p) => p.variants.map((v) => v.color)))), [products]);
+  const allSizes = useMemo(() => Array.from(new Set(products.flatMap((p) => p.sizes.map((s) => s.name)))), [products]);
+  const maxPrice = useMemo(() => (products.length ? Math.max(...products.map((p) => p.price)) : 0), [products]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, maxPrice]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch('/api/products')
+      .then((res) => (res.ok ? res.json() : { products: null }))
+      .then((json) => {
+        if (json.products?.length) setProducts(json.products.filter((p: Product) => !p.hidden));
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     setCategory(searchParams.get('category'));
@@ -70,7 +84,7 @@ function ShopPageInner() {
       default: result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
     return result;
-  }, [query, category, tag, sortBy, priceRange, selectedColors, selectedSizes]);
+  }, [products, query, category, tag, sortBy, priceRange, selectedColors, selectedSizes]);
 
   const clearAll = () => {
     setQuery(''); setCategory(null); setTag(null); setPriceRange([0, maxPrice]); setSelectedColors([]); setSelectedSizes([]); router.push('/shop');

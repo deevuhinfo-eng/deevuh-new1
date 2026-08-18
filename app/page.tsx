@@ -7,10 +7,29 @@ import { SaleCountdown } from '@/components/sections/sale-countdown';
 import { ReviewsSection } from '@/components/sections/reviews';
 import { InstagramGallery } from '@/components/sections/instagram';
 import { NewsletterSection } from '@/components/sections/newsletter';
-import { products } from '@/lib/products';
+import { products as fallbackProducts } from '@/lib/products';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { mapProduct } from '@/lib/supabase/mappers';
+import type { ProductRow } from '@/lib/supabase/types';
+import type { Product } from '@/lib/types';
 
-export default function HomePage() {
-  const visible = products.filter((p) => !p.hidden);
+async function getHomeProducts(): Promise<Product[]> {
+  try {
+    const { data, error } = await createAdminClient()
+      .from('products')
+      .select('*')
+      .eq('hidden', false)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    if (Array.isArray(data) && data.length > 0) return (data as ProductRow[]).map(mapProduct);
+    throw new Error('empty');
+  } catch {
+    return fallbackProducts.filter((p) => !p.hidden);
+  }
+}
+
+export default async function HomePage() {
+  const visible = await getHomeProducts();
   const featured = visible.filter((p) => p.featured).slice(0, 4);
   const newArrivals = visible.filter((p) => p.isNew).slice(0, 4);
   const bestSellers = visible.filter((p) => p.bestSeller).slice(0, 4);

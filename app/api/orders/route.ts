@@ -35,8 +35,9 @@ export async function GET() {
     }
 
     return NextResponse.json({ orders: data, itemsByOrder });
-  } catch {
-    return NextResponse.json({ orders: [], itemsByOrder: {} });
+  } catch (e: any) {
+    console.error('/api/orders GET failed:', e?.message, e?.code, e?.details);
+    return NextResponse.json({ orders: [], itemsByOrder: {}, error: e?.message, code: e?.code, details: e?.details });
   }
 }
 

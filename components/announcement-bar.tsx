@@ -1,17 +1,17 @@
 'use client';
 
 import { Sparkles, Truck, ShieldCheck } from 'lucide-react';
-
-const items = [
-  { icon: Truck, text: 'Complimentary express shipping over $250' },
-  { icon: ShieldCheck, text: '30-day easy returns' },
-  { icon: Sparkles, text: 'Hand-finished in small batches' },
-  { icon: Truck, text: 'Carbon-neutral worldwide delivery' },
-  { icon: ShieldCheck, text: 'Secure checkout verified' },
-  { icon: Sparkles, text: 'Members earn early access to new drops' },
-];
+import { useConfig } from '@/lib/use-config';
 
 export function AnnouncementBar() {
+  const { config } = useConfig();
+  const banner = config.freeShippingBanner;
+  if (!banner) return null;
+  const items = [
+    { icon: Truck, text: banner },
+    { icon: ShieldCheck, text: '30-day easy returns' },
+    { icon: Sparkles, text: 'Hand-finished in small batches' },
+  ];
   const loop = [...items, ...items];
   return (
     <div className="overflow-hidden border-b border-border/60 bg-foreground py-2.5 text-background">

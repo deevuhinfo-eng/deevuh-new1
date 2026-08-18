@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { TrendingUp, ShoppingBag, Users, DollarSign, Package, Clock, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
-import { products } from '@/lib/products';
+import { products as fallbackProducts } from '@/lib/products';
+import type { Product } from '@/lib/types';
 import { formatPrice, formatDate, timeAgo } from '@/lib/format';
 
 interface Order {
@@ -20,8 +21,22 @@ interface Order {
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<Product[]>(fallbackProducts);
 
   useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/api/products?all=true');
+        const json = await res.json();
+        if (json.products?.length) {
+          setProducts(json.products);
+          return;
+        }
+      } catch {}
+      setProducts(fallbackProducts);
+    }
+    fetchProducts();
+
     async function fetchOrders() {
       try {
         const res = await fetch('/api/orders');

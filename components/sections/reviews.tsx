@@ -3,17 +3,32 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
-import { reviews } from '@/lib/config';
+import { reviews as fallbackReviews } from '@/lib/config';
+import type { Review } from '@/lib/types';
 import { Reveal } from '@/components/reveal';
 
 export function ReviewsSection() {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [reviews, setReviews] = useState<Review[]>(fallbackReviews);
+
+  useEffect(() => {
+    let active = true;
+    async function fetchReviews() {
+      try {
+        const res = await fetch('/api/reviews');
+        const json = await res.json();
+        if (active && json.reviews?.length) setReviews(json.reviews);
+      } catch {}
+    }
+    fetchReviews();
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => { setDirection(1); setIndex((p) => (p + 1) % reviews.length); }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [reviews.length]);
 
   const go = (dir: number) => { setDirection(dir); setIndex((p) => (p + dir + reviews.length) % reviews.length); };
   const review = reviews[index];

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Chrome, LogOut, Package, User, Loader2, Save, MapPin, Phone, Mail } from 'lucide-react';
+import { LogOut, Package, User, Loader2, Save, MapPin, Phone, Mail, KeyRound, ArrowRight } from 'lucide-react';
 import { SiteShell } from '@/components/site-shell';
 import { createClient } from '@/lib/supabase/client';
 import { formatPrice, formatDate } from '@/lib/format';
@@ -53,6 +53,18 @@ export default function AccountPage() {
   const [form, setForm] = useState<Partial<Profile>>({});
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authNotice, setAuthNotice] = useState('');
+  const [resetting, setResetting] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSent, setResetSent] = useState(false);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [isResetMode, setIsResetMode] = useState(searchParams.get('reset') === '1');
 
   const tab = searchParams.get('tab') === 'orders' ? 'orders' : 'profile';
 
@@ -91,17 +103,129 @@ export default function AccountPage() {
     return () => { active = false; };
   }, []);
 
-  const signInWithGoogle = async () => {
+  const handleEmailAuth = async () => {
+    setAuthError('');
+    setAuthNotice('');
+    if (!authEmail.trim() || !authPassword) {
+      setAuthError('Please enter your email and password.');
+      return;
+    }
     setSigningIn(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/account` },
+      if (authMode === 'signup') {
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail.trim(),
+          password: authPassword,
+          options: {
+            data: { full_name: authName.trim() },
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Faccount`,
+          },
+        });
+        if (error) throw error;
+        if (data.session) {
+          setUser({ email: authEmail.trim() });
+          try {
+            const profRes = await fetch('/api/account/profile');
+            if (profRes.ok) {
+              const j = await profRes.json();
+              if (j.profile) setProfile(j.profile);
+            }
+          } catch {}
+        } else {
+          setAuthNotice('Account created! We sent a confirmation link to your email. Please click it to verify and sign in.');
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail.trim(),
+          password: authPassword,
+        });
+        if (error) {
+          if (error.message.toLowerCase().includes('email not confirmed') || error.message.toLowerCase().includes('not confirmed')) {
+            setAuthError('Email not confirmed yet. Check your inbox for the confirmation link, or create a new account to resend it.');
+          } else {
+            setAuthError(error.message);
+          }
+          return;
+        }
+        setUser({ email: authEmail.trim() });
+        setProfile(null);
+        try {
+          const profRes = await fetch('/api/account/profile');
+          if (profRes.ok) {
+            const j = await profRes.json();
+            if (j.profile) setProfile(j.profile);
+          }
+        } catch {}
+        try {
+          const ordRes = await fetch('/api/account/orders');
+          if (ordRes.ok) {
+            const j = await ordRes.json();
+            setOrders(j.orders || []);
+            setItemsByOrder(j.itemsByOrder || {});
+          }
+        } catch {}
+        const next = searchParams.get('next');
+        if (next) {
+          window.location.href = next;
+          return;
+        }
+      }
+    } catch (e: any) {
+      setAuthError(e.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSigningIn(false);
+    }
+  };
+
+  const sendResetLink = async () => {
+    setAuthError('');
+    setAuthNotice('');
+    if (!resetEmail.trim()) {
+      setAuthError('Please enter your email.');
+      return;
+    }
+    setResetting(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: `${window.location.origin}/auth/callback?next=%2Faccount%3Freset%3D1`,
       });
       if (error) throw error;
-    } catch {
-      setSigningIn(false);
+      setResetSent(true);
+    } catch (e: any) {
+      setAuthError(e.message || 'Failed to send reset link. Please try again.');
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const completePasswordReset = async () => {
+    setAuthError('');
+    setAuthNotice('');
+    if (!resetPassword || resetPassword.length < 8) {
+      setAuthError('Password must be at least 8 characters.');
+      return;
+    }
+    if (resetPassword !== resetConfirm) {
+      setAuthError('Passwords do not match.');
+      return;
+    }
+    setResetting(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.updateUser({ password: resetPassword });
+      if (error) throw error;
+      setAuthNotice('Password updated successfully! You can now sign in.');
+      setIsResetMode(false);
+      setAuthPassword(resetPassword);
+      setAuthMode('login');
+      setResetPassword('');
+      setResetConfirm('');
+    } catch (e: any) {
+      setAuthError(e.message || 'Failed to update password. Please try again.');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -146,24 +270,79 @@ export default function AccountPage() {
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : !user ? (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto mt-10 max-w-md rounded-2xl border border-border p-8 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent">
-              <User className="h-6 w-6" strokeWidth={1.5} />
-            </div>
-            <h2 className="mt-4 font-display text-2xl">Sign in to DEEVUH</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Sign in with Google to save your details, view orders and check out faster.
-            </p>
-            <button
-              onClick={signInWithGoogle}
-              disabled={signingIn}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-medium transition-colors hover:bg-accent disabled:opacity-70"
-            >
-              {signingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : <Chrome className="h-4 w-4" />}
-              {signingIn ? 'Redirecting to Google...' : 'Continue with Google'}
-            </button>
-            <p className="mt-4 text-xs text-muted-foreground">By continuing you agree to our Terms & Privacy Policy.</p>
-          </motion.div>
+          isResetMode ? (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto mt-10 max-w-md rounded-2xl border border-border p-8 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent">
+                <KeyRound className="h-6 w-6" strokeWidth={1.5} />
+              </div>
+              <h2 className="mt-4 font-display text-2xl">Reset Password</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Enter your email and we&apos;ll send you a link to reset your password.</p>
+              {authError && <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{authError}</p>}
+              {resetSent ? (
+                <div className="mt-6">
+                  <p className="flex items-center justify-center gap-2 text-sm text-success"><Mail className="h-4 w-4" /> Reset link sent! Check your inbox.</p>
+                </div>
+              ) : (
+                <div className="mt-6 space-y-4 text-left">
+                  <div>
+                    <label className="eyebrow">Email</label>
+                    <input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className={inputClass + ' mt-2'} placeholder="you@example.com" />
+                  </div>
+                  <button onClick={sendResetLink} disabled={resetting} className="btn-lux w-full bg-foreground text-background disabled:opacity-70">
+                    {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />} Send Reset Link
+                  </button>
+                  <button onClick={() => { setIsResetMode(false); setResetEmail(''); setAuthError(''); }} className="w-full text-center text-xs text-muted-foreground transition-colors hover:text-foreground">Back to Sign In</button>
+                </div>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto mt-10 max-w-md rounded-2xl border border-border p-8">
+              <div className="text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent">
+                  <User className="h-6 w-6" strokeWidth={1.5} />
+                </div>
+                <h2 className="mt-4 font-display text-2xl">{authMode === 'signup' ? 'Create Account' : 'Sign in to DEEVUH'}</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {authMode === 'signup' ? 'Join to save your details, view orders and check out faster.' : 'Sign in to save your details, view orders and check out faster.'}
+                </p>
+              </div>
+
+              <div className="mt-6 grid grid-cols-2 rounded-lg border border-border p-1 text-sm">
+                <button onClick={() => { setAuthMode('login'); setAuthError(''); }} className={`rounded-md py-2 font-medium transition-colors ${authMode === 'login' ? 'bg-accent' : 'text-muted-foreground hover:text-foreground'}`}>Sign In</button>
+                <button onClick={() => { setAuthMode('signup'); setAuthError(''); }} className={`rounded-md py-2 font-medium transition-colors ${authMode === 'signup' ? 'bg-accent' : 'text-muted-foreground hover:text-foreground'}`}>Sign Up</button>
+              </div>
+
+              <div className="mt-4 space-y-4">
+                {authMode === 'signup' && (
+                  <div>
+                    <label className="eyebrow">Full Name</label>
+                    <input value={authName} onChange={(e) => setAuthName(e.target.value)} className={inputClass + ' mt-2'} placeholder="Your name" />
+                  </div>
+                )}
+                <div>
+                  <label className="eyebrow">Email</label>
+                  <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className={inputClass + ' mt-2'} placeholder="you@example.com" />
+                </div>
+                <div>
+                  <label className="eyebrow">Password</label>
+                  <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className={inputClass + ' mt-2'} placeholder={authMode === 'signup' ? 'At least 8 characters' : 'Your password'} onKeyDown={(e) => { if (e.key === 'Enter') handleEmailAuth(); }} />
+                </div>
+              </div>
+
+              {authMode === 'login' && (
+                <button onClick={() => { setIsResetMode(true); setAuthError(''); }} className="mt-3 text-xs text-muted-foreground transition-colors hover:text-foreground">Forgot password?</button>
+              )}
+
+              {authError && <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{authError}</p>}
+              {authNotice && <p className="mt-4 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">{authNotice}</p>}
+
+              <button onClick={handleEmailAuth} disabled={signingIn} className="btn-lux mt-5 w-full bg-foreground text-background disabled:opacity-70">
+                {signingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                {signingIn ? 'Please wait...' : authMode === 'signup' ? 'Create Account' : 'Sign In'}
+              </button>
+              <p className="mt-4 text-center text-xs text-muted-foreground">By continuing you agree to our Terms & Privacy Policy.</p>
+            </motion.div>
+          )
         ) : (
           <div className="mt-10 grid gap-8 lg:grid-cols-3">
             {/* Profile card */}
@@ -204,7 +383,30 @@ export default function AccountPage() {
                     <p className="mt-4 text-sm text-muted-foreground">No orders yet.</p>
                     <Link href="/shop" className="btn-lux mt-6 inline-flex bg-foreground text-background">Start Shopping</Link>
                   </div>
-                ) : (
+        ) : user && isResetMode ? (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mx-auto mt-10 max-w-md rounded-2xl border border-border p-8 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent">
+              <KeyRound className="h-6 w-6" strokeWidth={1.5} />
+            </div>
+            <h2 className="mt-4 font-display text-2xl">Set New Password</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Choose a new password for your account.</p>
+            {authError && <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{authError}</p>}
+            {authNotice && <p className="mt-4 rounded-lg bg-success/10 px-3 py-2 text-sm text-success">{authNotice}</p>}
+            <div className="mt-6 space-y-4 text-left">
+              <div>
+                <label className="eyebrow">New Password</label>
+                <input type="password" value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} className={inputClass + ' mt-2'} placeholder="At least 8 characters" />
+              </div>
+              <div>
+                <label className="eyebrow">Confirm Password</label>
+                <input type="password" value={resetConfirm} onChange={(e) => setResetConfirm(e.target.value)} className={inputClass + ' mt-2'} placeholder="Re-enter new password" onKeyDown={(e) => { if (e.key === 'Enter') completePasswordReset(); }} />
+              </div>
+              <button onClick={completePasswordReset} disabled={resetting} className="btn-lux w-full bg-foreground text-background disabled:opacity-70">
+                {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />} Update Password
+              </button>
+            </div>
+          </motion.div>
+        ) : (
                   <div className="mt-4 space-y-4">
                     {orders.map((o) => (
                       <div key={o.order_id} className="rounded-xl border border-border p-4">

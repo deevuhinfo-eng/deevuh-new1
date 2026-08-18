@@ -4,12 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ShieldCheck, CreditCard, Smartphone, Building2, Wallet, Banknote, Tag, X, ArrowRight, ArrowLeft, Check, Chrome, UserCheck, Loader2 } from 'lucide-react';
+import { ShieldCheck, CreditCard, Smartphone, Building2, Wallet, Banknote, Tag, X, ArrowRight, ArrowLeft, Check, UserCheck, Loader2 } from 'lucide-react';
 import { SiteShell } from '@/components/site-shell';
 import { useStore, cartTotal } from '@/lib/store';
 import { formatPrice, generateOrderId } from '@/lib/format';
 import { useConfig } from '@/lib/use-config';
-import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -108,15 +107,10 @@ export default function CheckoutPage() {
   const signInToCheckout = async () => {
     setSigningIn(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: `${window.location.origin}/checkout` },
-      });
-      if (error) throw error;
+      window.location.href = '/account?next=%2Fcheckout';
     } catch {
       setSigningIn(false);
-      toast.error('Could not start Google sign-in. Please try again.');
+      toast.error('Could not start sign-in. Please try again.');
     }
   };
 
@@ -208,7 +202,8 @@ export default function CheckoutPage() {
               disabled={signingIn}
               className="btn-lux mt-8 w-full bg-foreground text-background disabled:opacity-70"
             >
-              {signingIn ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-background/30 border-t-background" /> Redirecting to Google...</> : <><Chrome className="h-4 w-4" /> Continue with Google</>}
+              {signingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
+              {signingIn ? 'Redirecting to sign in...' : 'Sign In To Continue'}
             </button>
             <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Secure checkout · Your details stay private</p>
           </motion.div>

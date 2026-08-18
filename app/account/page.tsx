@@ -53,7 +53,7 @@ export default function AccountPage() {
   const [form, setForm] = useState<Partial<Profile>>({});
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>(searchParams.get('mode') === 'signup' ? 'signup' : 'login');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authName, setAuthName] = useState('');
@@ -132,6 +132,11 @@ export default function AccountPage() {
               if (j.profile) setProfile(j.profile);
             }
           } catch {}
+          const next = searchParams.get('next');
+          if (next) {
+            window.location.href = next;
+            return;
+          }
         } else {
           setAuthNotice('Account created! We sent a confirmation link to your email. Please click it to verify and sign in.');
         }

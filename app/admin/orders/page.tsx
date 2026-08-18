@@ -20,6 +20,9 @@ interface Order {
   pincode: string;
   notes: string;
   paymentMethod: string;
+  couponCode: string | null;
+  codFee: number;
+  dueOnDelivery: number;
   items: { name: string; price: number; quantity: number; color: string; size: string; image: string }[];
   subtotal: number;
   discount: number;
@@ -56,31 +59,38 @@ export default function AdminOrdersPage() {
         const res = await fetch('/api/orders');
         const json = await res.json();
         if (json.orders?.length) {
-          const mapped = json.orders.map((o: any) => ({
-            orderId: o.order_id,
-            txnId: o.txn_id,
-            name: o.customer_name,
-            email: o.customer_email,
-            phone: o.customer_phone,
-            address: o.address,
-            city: o.city,
-            state: o.state,
-            country: o.country,
-            pincode: o.pincode,
-            notes: o.notes,
-            paymentMethod: o.payment_method,
-            items: [],
-            subtotal: o.subtotal,
-            discount: o.discount,
-            shipping: o.shipping,
-            tax: o.tax,
-            grandTotal: o.grand_total,
-            placedAt: o.placed_at,
-            orderStatus: o.order_status,
-            customerName: o.customer_name,
-            customerEmail: o.customer_email,
-            customerPhone: o.customer_phone,
-          }));
+          const itemsByOrder = json.itemsByOrder || {};
+          const mapped = json.orders.map((o: any) => {
+            const codMatch = (o.notes || '').match(/\[COD Fee: ₹([\d.]+) paid, ₹([\d.]+) due on delivery\]/);
+            return {
+              orderId: o.order_id,
+              txnId: o.txn_id,
+              name: o.customer_name,
+              email: o.customer_email,
+              phone: o.customer_phone,
+              address: o.address,
+              city: o.city,
+              state: o.state,
+              country: o.country,
+              pincode: o.pincode,
+              notes: o.notes,
+              paymentMethod: o.payment_method,
+              couponCode: o.coupon_code || null,
+              codFee: codMatch ? Number(codMatch[1]) : 0,
+              dueOnDelivery: codMatch ? Number(codMatch[2]) : 0,
+              items: itemsByOrder[o.order_id] || [],
+              subtotal: o.subtotal,
+              discount: o.discount,
+              shipping: o.shipping,
+              tax: o.tax,
+              grandTotal: o.grand_total,
+              placedAt: o.placed_at,
+              orderStatus: o.order_status,
+              customerName: o.customer_name,
+              customerEmail: o.customer_email,
+              customerPhone: o.customer_phone,
+            };
+          });
           setOrders(mapped);
           return;
         }
@@ -186,10 +196,12 @@ export default function AdminOrdersPage() {
       ...order.items.map((i) => `  ${i.name} (${i.color}, ${i.size}) x${i.quantity} - ${formatPrice(i.price * i.quantity)}`),
       '',
       `Subtotal: ${formatPrice(order.subtotal)}`,
-      order.discount > 0 ? `Discount: -${formatPrice(order.discount)}` : '',
+      order.discount > 0 ? `Discount (${order.couponCode || 'Coupon'}): -${formatPrice(order.discount)}` : '',
       `Shipping: ${order.shipping === 0 ? 'Free' : formatPrice(order.shipping)}`,
       `GST: ${formatPrice(order.tax)}`,
       `Grand Total: ${formatPrice(order.grandTotal)}`,
+      order.paymentMethod === 'cod' && order.codFee > 0 ? `COD Fee Paid Now: ${formatPrice(order.codFee)}` : '',
+      order.paymentMethod === 'cod' && order.dueOnDelivery > 0 ? `Balance Due on Delivery: ${formatPrice(order.dueOnDelivery)}` : '',
       '',
       'Thank you for your business.',
     ].filter(Boolean).join('\n');
@@ -295,20 +307,26 @@ export default function AdminOrdersPage() {
               </div>
               <div>
                 <p className="eyebrow mb-2">Items</p>
-                {selected.items.map((item, i) => (
-                  <div key={i} className="flex gap-3 border-b border-border/50 py-2 last:border-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.image} alt={item.name} className="h-12 w-10 rounded object-cover" />
-                    <div className="flex-1"><p className="text-xs font-medium">{item.name}</p><p className="text-xs text-muted-foreground">{item.color} · {item.size} · Qty {item.quantity}</p></div>
-                    <p className="text-xs font-medium">{formatPrice(item.price * item.quantity)}</p>
-                  </div>
-                ))}
+                {selected.items.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No items recorded.</p>
+                ) : (
+                  selected.items.map((item, i) => (
+                    <div key={i} className="flex gap-3 border-b border-border/50 py-2 last:border-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.image} alt={item.name} className="h-12 w-10 rounded object-cover" />
+                      <div className="flex-1"><p className="text-xs font-medium">{item.name}</p><p className="text-xs text-muted-foreground">{item.color} · {item.size} · Qty {item.quantity}</p></div>
+                      <p className="text-xs font-medium">{formatPrice(item.price * item.quantity)}</p>
+                    </div>
+                  ))
+                )}
               </div>
               <div className="space-y-2 border-t border-border pt-4">
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatPrice(selected.subtotal)}</span></div>
-                {selected.discount > 0 && <div className="flex justify-between text-success"><span>Discount</span><span>-{formatPrice(selected.discount)}</span></div>}
+                {selected.discount > 0 && <div className="flex justify-between text-success"><span>Discount{selected.couponCode ? ` (${selected.couponCode})` : ''}</span><span>-{formatPrice(selected.discount)}</span></div>}
                 <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{selected.shipping === 0 ? 'Free' : formatPrice(selected.shipping)}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">GST</span><span>{formatPrice(selected.tax)}</span></div>
+                {selected.paymentMethod === 'cod' && selected.codFee > 0 && <div className="flex justify-between text-muted-foreground"><span>COD Fee (paid now)</span><span>{formatPrice(selected.codFee)}</span></div>}
+                {selected.paymentMethod === 'cod' && selected.dueOnDelivery > 0 && <div className="flex justify-between text-warning"><span>Balance Due on Delivery</span><span>{formatPrice(selected.dueOnDelivery)}</span></div>}
                 <div className="flex justify-between border-t border-border pt-2 font-medium"><span>Total</span><span>{formatPrice(selected.grandTotal)}</span></div>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-muted p-4">

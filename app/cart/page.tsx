@@ -22,11 +22,12 @@ export default function CartPage() {
 
   const subtotal = cartTotal(cart);
   const coupon = coupons.find((c) => c.code === couponCode && c.active);
-  const discount = coupon && subtotal >= coupon.minSubtotal
+  const rawDiscount = coupon && subtotal >= coupon.minSubtotal
     ? coupon.type === 'percent'
       ? Math.round((subtotal * coupon.value) / 100)
       : coupon.value
     : 0;
+  const discount = Math.min(rawDiscount, subtotal);
   const afterDiscount = subtotal - discount;
   const shipping = afterDiscount >= config.shipping.freeThreshold || afterDiscount === 0 ? 0 : config.shipping.standardCharge;
   const tax = config.tax.enabled ? Math.round((afterDiscount * config.tax.gstRate) / 100) : 0;

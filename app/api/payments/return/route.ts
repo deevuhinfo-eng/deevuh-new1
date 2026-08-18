@@ -53,8 +53,8 @@ export async function POST(request: Request) {
       return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/order-confirmation?orderId=${orderId}`);
     }
 
-    // Amount check: non-COD must equal grand total, COD must equal the COD fee
-    const expectedAmount = udf2 === 'cod' ? COD_FEE : Number(orderRow.grand_total);
+    // Amount check: non-COD must equal grand total, COD must equal min(COD fee, grand total)
+    const expectedAmount = udf2 === 'cod' ? Math.min(COD_FEE, Number(orderRow.grand_total)) : Number(orderRow.grand_total);
     const amountMatches = Math.abs(Number(amount) - expectedAmount) < 0.01;
 
     // Also ensure the txnid matches the one we generated for this order

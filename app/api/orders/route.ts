@@ -19,9 +19,24 @@ export async function GET() {
       .order('placed_at', { ascending: false });
 
     if (error) throw error;
-    return NextResponse.json({ orders: data });
+
+    let itemsByOrder: Record<string, any[]> = {};
+    if (data?.length) {
+      const { data: items, error: itemsError } = await getSupabase()
+        .from('order_items')
+        .select('*')
+        .in('order_id', data.map((o: any) => o.order_id));
+      if (!itemsError && items?.length) {
+        itemsByOrder = items.reduce((acc: Record<string, any[]>, item: any) => {
+          (acc[item.order_id] = acc[item.order_id] || []).push(item);
+          return acc;
+        }, {});
+      }
+    }
+
+    return NextResponse.json({ orders: data, itemsByOrder });
   } catch {
-    return NextResponse.json({ orders: [] });
+    return NextResponse.json({ orders: [], itemsByOrder: {} });
   }
 }
 

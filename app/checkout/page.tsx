@@ -81,7 +81,8 @@ export default function CheckoutPage() {
 
   const subtotal = cartTotal(cart);
   const coupon = coupons.find((c) => c.code === couponCode && c.active);
-  const discount = coupon && subtotal >= coupon.minSubtotal ? (coupon.type === 'percent' ? Math.round((subtotal * coupon.value) / 100) : coupon.value) : 0;
+  const rawDiscount = coupon && subtotal >= coupon.minSubtotal ? (coupon.type === 'percent' ? Math.round((subtotal * coupon.value) / 100) : coupon.value) : 0;
+  const discount = Math.min(rawDiscount, subtotal);
   const afterDiscount = subtotal - discount;
   const shipping = afterDiscount >= config.shipping.freeThreshold || afterDiscount === 0 ? 0 : config.shipping.standardCharge;
   const tax = config.tax.enabled ? Math.round((afterDiscount * config.tax.gstRate) / 100) : 0;
@@ -89,8 +90,8 @@ export default function CheckoutPage() {
   const isCod = paymentMethod === 'cod';
   const codFee = config.cod?.fee ?? 149;
   const codEnabled = config.cod?.enabled ?? true;
-  const payNow = isCod ? codFee : grandTotal;
-  const dueOnDelivery = isCod ? Math.max(0, grandTotal - codFee) : 0;
+  const payNow = isCod ? Math.min(codFee, grandTotal) : grandTotal;
+  const dueOnDelivery = isCod ? Math.max(0, grandTotal - payNow) : 0;
 
   const handleCoupon = () => {
     const code = couponInput.trim().toUpperCase();
@@ -134,12 +135,12 @@ export default function CheckoutPage() {
       const orderData = {
         orderId, txnId, ...form, paymentMethod,
         items: cart, subtotal, discount, shipping, tax, grandTotal,
-        codFee: isCod ? codFee : 0, dueOnDelivery: isCod ? Math.max(0, grandTotal - codFee) : 0,
+        codFee: isCod ? codFee : 0, dueOnDelivery: isCod ? dueOnDelivery : 0,
         couponCode, status: isCod ? 'cod_confirmed' : 'paid', placedAt: new Date().toISOString(),
       };
       try { localStorage.setItem('maison-noir-last-order', JSON.stringify(orderData)); } catch {}
 
-      const notes = isCod ? `[COD Fee: ₹${codFee} paid, ₹${dueOnDelivery} due on delivery]` : '';
+      const notes = isCod ? `[COD Fee: ₹${payNow} paid, ₹${dueOnDelivery} due on delivery]` : '';
       const res = await fetch('/api/payments/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -205,6 +206,12 @@ export default function CheckoutPage() {
               {signingIn ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCheck className="h-4 w-4" />}
               {signingIn ? 'Redirecting to sign in...' : 'Sign In To Continue'}
             </button>
+            <p className="mt-3 text-xs text-muted-foreground">
+              New to DEEVUH?{' '}
+              <Link href="/account?mode=signup&next=%2Fcheckout" className="font-medium text-foreground underline underline-offset-2">
+                Create an account
+              </Link>
+            </p>
             <p className="mt-4 flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" /> Secure checkout · Your details stay private</p>
           </motion.div>
         </div>
@@ -270,7 +277,7 @@ export default function CheckoutPage() {
                 <div className="mt-3 rounded-lg border border-border bg-accent/40 p-4 text-sm">
                   <p className="font-medium">Cash on Delivery</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Pay <span className="font-semibold text-foreground">{formatPrice(codFee)}</span> now to confirm your COD order. Balance of{' '}
+                    Pay <span className="font-semibold text-foreground">{formatPrice(payNow)}</span> now to confirm your COD order. Balance of{' '}
                     <span className="font-semibold text-foreground">{formatPrice(dueOnDelivery)}</span> will be collected in cash on delivery.
                   </p>
                 </div>
@@ -321,7 +328,7 @@ export default function CheckoutPage() {
                 <div className="flex justify-between border-t border-border pt-3 text-base font-medium"><span>Grand Total</span><span>{formatPrice(grandTotal)}</span></div>
                 {isCod && (
                   <>
-                    <div className="flex justify-between text-sm"><span className="text-muted-foreground">COD Fee (now)</span><span className="font-medium">{formatPrice(codFee)}</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-muted-foreground">COD Fee (paid now)</span><span className="font-medium">{formatPrice(payNow)}</span></div>
                     <div className="flex justify-between text-sm text-warning"><span>Balance Due on Delivery</span><span className="font-medium">{formatPrice(dueOnDelivery)}</span></div>
                   </>
                 )}

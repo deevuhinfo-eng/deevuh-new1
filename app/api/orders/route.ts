@@ -37,15 +37,7 @@ export async function GET() {
     return NextResponse.json({ orders: data, itemsByOrder });
   } catch (e: any) {
     console.error('/api/orders GET failed:', e?.message, e?.code, e?.details);
-    return NextResponse.json({
-      orders: [], itemsByOrder: {},
-      error: e?.message, code: e?.code, details: e?.details,
-      env: {
-        url: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'set' : 'missing',
-        serviceRole: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'set' : 'missing',
-        anon: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'set' : 'missing',
-      },
-    });
+    return NextResponse.json({ orders: [], itemsByOrder: {} });
   }
 }
 

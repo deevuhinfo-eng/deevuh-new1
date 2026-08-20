@@ -108,6 +108,7 @@ export async function POST(request: Request) {
     const { data, error } = await getSupabase()
       .from('reviews')
       .insert({
+        id: crypto.randomUUID(),
         name: name || session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Verified Buyer',
         location: location || '',
         rating: stars,

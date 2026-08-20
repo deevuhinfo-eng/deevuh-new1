@@ -126,7 +126,7 @@ export async function POST(request: Request) {
       throw error;
     }
 
-    const ratingSummary = await refreshProductRating(productId);
+    const ratingSummary = await refreshProductRating(productId, { addStars: stars });
     return NextResponse.json({ review: data, ...ratingSummary }, { status: 201 });
   } catch (e: any) {
     console.error('/api/reviews POST failed:', e?.message, e?.code, e?.details);
@@ -144,7 +144,7 @@ export async function DELETE(request: Request) {
 
     const { data: review, error: fetchError } = await getSupabase()
       .from('reviews')
-      .select('product_id')
+      .select('product_id, rating')
       .eq('id', id)
       .single();
     if (fetchError) throw fetchError;
@@ -152,7 +152,7 @@ export async function DELETE(request: Request) {
     const { error } = await getSupabase().from('reviews').delete().eq('id', id);
     if (error) throw error;
 
-    if (review?.product_id) await refreshProductRating(review.product_id);
+    if (review?.product_id) await refreshProductRating(review.product_id, { removeStars: review.rating });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     console.error('/api/reviews DELETE failed:', e?.message, e?.code, e?.details);
@@ -160,21 +160,34 @@ export async function DELETE(request: Request) {
   }
 }
 
-async function refreshProductRating(productId: string) {
-  const { data, error } = await getSupabase()
-    .from('reviews')
-    .select('rating')
-    .eq('product_id', productId);
+async function refreshProductRating(
+  productId: string,
+  opts: { addStars?: number; removeStars?: number } = {}
+) {
+  const { data: product, error } = await getSupabase()
+    .from('products')
+    .select('rating, review_count')
+    .eq('id', productId)
+    .single();
   if (error) throw error;
 
-  const ratings = (data ?? []).map((r) => r.rating);
-  const count = ratings.length;
-  const avg = count
-    ? Math.round((ratings.reduce((a, b) => a + b, 0) / count) * 10) / 10
-    : 0;
+  const prevCount = Math.max(0, Number(product?.review_count ?? 0));
+  const prevRating = Number(product?.rating ?? 0);
 
-  await getSupabase().from('products').update({ rating: avg, review_count: count }).eq('id', productId);
-  return { rating: avg, reviewCount: count };
+  let total = prevRating * prevCount;
+  let count = prevCount;
+  if (opts.addStars) {
+    total += opts.addStars;
+    count += 1;
+  }
+  if (opts.removeStars != null) {
+    total = Math.max(0, total - opts.removeStars);
+    count = Math.max(0, count - 1);
+  }
+
+  const rating = count ? Math.round((total / count) * 10) / 10 : 0;
+  await getSupabase().from('products').update({ rating, review_count: count }).eq('id', productId);
+  return { rating, reviewCount: count };
 }
 
 function mapReviews(data: ReviewRow[], includeEmail = false) {

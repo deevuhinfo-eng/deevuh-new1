@@ -66,7 +66,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className={cn('fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border transition-transform lg:translate-x-0', sidebarOpen ? 'translate-x-0' : '-translate-x-full')}>
         <div className="flex h-16 items-center justify-between border-b border-border px-6">
-          <Link href="/admin" className="font-display text-lg tracking-[0.2em]">DEEV<span className="font-light">UH</span></Link>
+          <Link href="/admin" className="flex items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="DEEVUH" className="h-7 w-auto" />
+          </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden"><X className="h-5 w-5" /></button>
         </div>
         <nav className="p-4 space-y-1">

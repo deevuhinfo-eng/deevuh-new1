@@ -24,14 +24,14 @@ export function PageLoader() {
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="flex flex-col items-center gap-6">
-            <motion.div
-              className="font-display text-2xl tracking-[0.4em] text-foreground"
-              initial={{ opacity: 0, letterSpacing: '0.8em' }}
-              animate={{ opacity: 1, letterSpacing: '0.4em' }}
+            <motion.img
+              src="/logo.png"
+              alt="DEEVUH"
+              className="h-12 w-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            >
-              DEEVUH
-            </motion.div>
+            />
             <div className="relative h-px w-40 overflow-hidden bg-border">
               <motion.div
                 className="absolute inset-y-0 left-0 w-1/3 bg-foreground"

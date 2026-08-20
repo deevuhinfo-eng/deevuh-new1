@@ -13,6 +13,10 @@ export const metadata: Metadata = {
     'DEEVUH is a modern luxury clothing atelier. Limited-edition garments crafted with uncompromising quality and timeless design.',
   keywords: ['luxury fashion', 'designer clothing', 'premium apparel', 'atelier', 'minimalist fashion'],
   manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/icon-192.png', sizes: '192x192', type: 'image/png' }, { url: '/icon-512.png', sizes: '512x512', type: 'image/png' }],
+    apple: [{ url: '/icon-192.png', sizes: '192x192', type: 'image/png' }],
+  },
   authors: [{ name: 'DEEVUH' }],
   openGraph: {
     type: 'website',

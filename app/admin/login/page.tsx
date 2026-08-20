@@ -41,7 +41,8 @@ export default function AdminLoginPage() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-border">
               <Lock className="h-6 w-6" strokeWidth={1.5} />
             </div>
-            <p className="mt-4 font-display text-xl tracking-[0.2em]">DEEV<span className="font-light">UH</span></p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="DEEVUH" className="mx-auto mt-4 h-10 w-auto" />
             <p className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">Admin Access</p>
           </div>
           <form onSubmit={submit} className="space-y-4">

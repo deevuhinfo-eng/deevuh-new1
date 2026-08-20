@@ -49,8 +49,9 @@ export function Navbar() {
             <button className="md:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">
               <Menu className="h-5 w-5" strokeWidth={1.5} />
             </button>
-            <Link href="/" className="font-display text-xl tracking-[0.25em] md:text-2xl">
-              DEEV<span className="font-light">UH</span>
+            <Link href="/" className="flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="DEEVUH" className="h-7 w-auto md:h-8" />
             </Link>
           </div>
 
@@ -94,7 +95,10 @@ export function Navbar() {
             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="flex h-16 items-center justify-between border-b border-border px-6">
-              <span className="font-display text-lg tracking-[0.25em]">DEEV<span className="font-light">UH</span></span>
+              <span className="flex items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo.png" alt="DEEVUH" className="h-6 w-auto" />
+              </span>
               <button onClick={() => setMobileOpen(false)} aria-label="Close menu">
                 <X className="h-5 w-5" />
               </button>

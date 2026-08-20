@@ -4,10 +4,10 @@ import { Reveal } from '@/components/reveal';
 import { NewsletterSection } from '@/components/sections/newsletter';
 
 const values = [
-  { title: 'Our Story', body: 'Founded in 2019, DEEVUH began as a response to the noise of modern fashion. We believed luxury had lost its meaning in logo-chasing and seasonal churn. Our answer: a small atelier producing limited quantities of garments made to last decades, not seasons.' },
-  { title: 'Our Mission', body: 'To create clothing that earns its place in your wardrobe through quality, not marketing. Every piece we make must be beautiful, durable, and responsibly produced. We measure success not in units sold, but in garments still worn ten years later.' },
-  { title: 'Our Vision', body: 'A fashion industry that values craftsmanship over volume, sustainability over speed, and timeless design over trend. We envision a world where every garment is made with intention and worn with purpose.' },
-  { title: 'Our Quality Promise', body: 'We work exclusively with mills in Italy, Scotland, Japan, and Portugal that hold certifications for responsible sourcing. Our wool is mulesing-free. Our cotton is GOTS-certified organic. Every seam is inspected by hand before it leaves our atelier.' },
+  { title: 'Our Story', body: 'From Two Best Friends, With Love. Deevuh was born from a shared love for fashion and a dream to create something meaningful together.' },
+  { title: 'Proudly Made In India', body: 'Every piece is crafted with care by talented artisans and karigars who bring our designs to life. Behind every stitch is craftsmanship, passion, and countless hours of dedication.' },
+  { title: 'Our Philosophy', body: 'We\u2019re not here to chase trends. We don\u2019t want to create clothes that just live in your wardrobe. We want to create pieces you reach for when you want to feel like the best version of yourself.' },
+  { title: 'Our Thank You', body: 'From two best friends to every girl who chooses Deevuh \u2014 thank you for being part of this dream. This is more than fashion for us. It\u2019s our heart, our story, and everything we love stitched into every piece. \u2661' },
 ];
 
 export default function AboutPage() {
@@ -20,7 +20,7 @@ export default function AboutPage() {
           <Reveal>
             <div className="zoom-container aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="https://images.pexels.com/photos/8210485/pexels-photo-8210485.jpeg?auto=compress&cs=tinysrgb&w=900" alt="Atelier" className="zoom-img h-full w-full object-cover" />
+              <img src="/banners/about.jpg" alt="Deevuh" className="zoom-img h-full w-full object-cover" />
             </div>
           </Reveal>
           <div className="space-y-12">
@@ -42,9 +42,9 @@ export default function AboutPage() {
           </Reveal>
           <div className="mt-12 grid grid-cols-2 gap-8 md:grid-cols-4">
             {[
-              { num: '50+', label: 'Artisan Partners' },
-              { num: '4', label: 'Countries of Origin' },
-              { num: '100%', label: 'Responsible Sourcing' },
+              { num: '100%', label: 'Made In India' },
+              { num: '2', label: 'Best Friends, One Dream' },
+              { num: 'Small', label: 'Batch Productions' },
               { num: '0', label: 'Fast Fashion' },
             ].map((stat, i) => (
               <Reveal key={stat.label} delay={i * 0.1} className="text-center">

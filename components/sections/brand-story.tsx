@@ -18,8 +18,8 @@ export function BrandStory() {
           <motion.div style={{ y }} className="absolute inset-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://images.pexels.com/photos/9965012/pexels-photo-9965012.jpeg?auto=compress&cs=tinysrgb&w=900"
-              alt="Atelier craftsmanship"
+              src="/banners/story-line.jpg"
+              alt="The Story Line"
               className="h-[120%] w-full object-cover"
             />
           </motion.div>

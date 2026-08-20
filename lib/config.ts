@@ -17,10 +17,8 @@ export const siteConfig: SiteConfig = {
   tax: { gstRate: 5, enabled: true },
   cod: { enabled: true, fee: 149 },
   hero: {
-    videoUrl:
-      'https://cdn.coverr.co/videos/coverr-a-woman-in-a-white-dress-walking-on-the-beach-1572/1080p.mp4',
-    poster:
-      'https://images.pexels.com/photos/1488463/pexels-photo-1488463.jpeg?auto=compress&cs=tinysrgb&w=1920',
+    videoUrl: '',
+    poster: '/banners/home-hero.jpg',
     headline: 'The Art of Quiet Luxury',
     subheadline:
       'Limited-edition garments, crafted in small batches with materials sourced from the world\u2019s finest mills.',

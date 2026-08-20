@@ -5,7 +5,6 @@ import { CollectionSection } from '@/components/sections/collection-section';
 import { BrandStory } from '@/components/sections/brand-story';
 import { SaleCountdown } from '@/components/sections/sale-countdown';
 import { ReviewsSection } from '@/components/sections/reviews';
-import { InstagramGallery } from '@/components/sections/instagram';
 import { NewsletterSection } from '@/components/sections/newsletter';
 import { products as fallbackProducts } from '@/lib/products';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -51,7 +50,6 @@ export default async function HomePage() {
       {section('limited', 'By Appointment', 'Limited Edition', 'Numbered pieces in extremely limited quantities.', limited)}
       {section('summer', 'The Season', 'Summer Collection', 'Lightweight fabrics for the warmer months.', summer)}
       <ReviewsSection />
-      <InstagramGallery />
       <NewsletterSection />
     </SiteShell>
   );

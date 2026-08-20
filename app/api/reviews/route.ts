@@ -3,6 +3,8 @@ import { createAdminClient as createSupabaseClient } from '@/lib/supabase/admin'
 import { reviews as fallbackReviews } from '@/lib/config';
 import type { ReviewRow } from '@/lib/supabase/types';
 
+export const dynamic = 'force-dynamic';
+
 let supabase: ReturnType<typeof createSupabaseClient> | null = null;
 function getSupabase() {
   if (!supabase) supabase = createSupabaseClient();

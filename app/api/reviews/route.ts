@@ -13,6 +13,11 @@ function getSupabase() {
 }
 
 const PAID_STATUSES = ['paid', 'cod_confirmed'];
+const EMAIL_COLUMN_MISSING = ['PGRST204', '42703'];
+
+function isEmailColumnMissing(error: any) {
+  return EMAIL_COLUMN_MISSING.includes(error?.code) || /email.*colum/i.test(error?.message || '');
+}
 
 export async function GET(request: Request) {
   try {
@@ -95,7 +100,7 @@ export async function POST(request: Request) {
       .eq('email', email)
       .eq('product_id', productId)
       .maybeSingle();
-    if (existing.error && existing.error.code !== '42703') throw existing.error;
+    if (existing.error && !isEmailColumnMissing(existing.error)) throw existing.error;
     if (existing.data) {
       return NextResponse.json({ error: 'You have already reviewed this item' }, { status: 400 });
     }
@@ -117,7 +122,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      if (error.code === '42703') {
+      if (isEmailColumnMissing(error)) {
         return NextResponse.json(
           { error: 'Review store is not ready yet. The site owner needs to run the reviews email-column migration.' },
           { status: 500 }

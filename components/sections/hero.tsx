@@ -17,6 +17,7 @@ export function Hero() {
   const words = config.hero.headline.split(' ');
 
   return (
+    <>
     <section ref={ref} className="relative h-screen w-full overflow-hidden">
       <motion.div style={{ scale, y }} className="absolute inset-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -74,12 +75,12 @@ export function Hero() {
         </motion.p>
 
         <motion.div
-          className="mt-16 flex flex-col items-end gap-4 pr-6 sm:mt-10 sm:flex-row sm:items-center sm:justify-center sm:pr-0"
+          className="mt-10 flex flex-col items-center gap-4 sm:mt-10 sm:flex-row sm:items-center sm:justify-center sm:pr-0"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.2 }}
         >
-          <Link href="/shop" className="group flex items-center gap-3 rounded-full bg-white px-8 py-4 text-xs font-medium uppercase tracking-[0.2em] text-black transition-all hover:gap-4">
+          <Link href="/shop" className="group hidden items-center gap-3 rounded-full bg-white px-8 py-4 text-xs font-medium uppercase tracking-[0.2em] text-black transition-all hover:gap-4 sm:flex">
             Explore Collection
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
@@ -101,5 +102,13 @@ export function Hero() {
         </motion.div>
       </motion.div>
     </section>
+
+    <div className="flex items-end justify-end px-6 pb-8 sm:hidden">
+      <Link href="/shop" className="group flex items-center gap-3 rounded-full bg-white px-8 py-4 text-xs font-medium uppercase tracking-[0.2em] text-black transition-all hover:gap-4">
+        Explore Collection
+        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+      </Link>
+    </div>
+    </>
   );
 }

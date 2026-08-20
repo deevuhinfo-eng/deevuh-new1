@@ -18,6 +18,12 @@ import {
   CarouselItem,
   type CarouselApi,
 } from '@/components/ui/carousel';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import type { Product } from '@/lib/types';
 
 export default function ProductPage() {
@@ -38,6 +44,7 @@ export default function ProductPage() {
   const [zoomed, setZoomed] = useState(false);
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 });
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'shipping' | 'returns'>('description');
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -241,7 +248,7 @@ export default function ProductPage() {
               <div className="mt-6">
                 <div className="flex items-center justify-between">
                   <p className="eyebrow">Size</p>
-                  <button className="text-xs text-muted-foreground underline">Size Guide</button>
+                  <button onClick={() => setSizeGuideOpen(true)} className="text-xs text-muted-foreground underline transition-colors hover:text-foreground">Size Guide</button>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {product.sizes.map((s) => (
@@ -374,6 +381,20 @@ export default function ProductPage() {
           </div>
         )}
       </div>
+
+      <Dialog open={sizeGuideOpen} onOpenChange={setSizeGuideOpen}>
+        <DialogContent className="max-h-[85vh] w-[calc(100vw-2rem)] max-w-xl overflow-y-auto p-4 md:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-center">Size Guide</DialogTitle>
+          </DialogHeader>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={product.category === 'bottomwear' ? '/size-charts/skirt.jpg' : '/size-charts/co-ord-sets.jpg'}
+            alt={`${product.name} size chart`}
+            className="mx-auto w-full max-w-md object-contain"
+          />
+        </DialogContent>
+      </Dialog>
     </SiteShell>
   );
 }

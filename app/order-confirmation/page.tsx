@@ -115,7 +115,7 @@ function OrderConfirmationInner() {
       `Email: ${order.email}`,
       '',
       'Items:',
-      ...order.items.map((i) => `  ${i.name} (${i.color}, ${i.size}) x${i.quantity} - ${formatPrice(i.price * i.quantity)}`),
+      ...order.items.map((i) => `  ${i.name} (${i.size}) x${i.quantity} - ${formatPrice(i.price * i.quantity)}`),
       '',
       `Subtotal: ${formatPrice(order.subtotal)}`,
       order.discount > 0 ? `Discount: -${formatPrice(order.discount)}` : '',
@@ -186,7 +186,7 @@ function OrderConfirmationInner() {
                   <img src={item.image} alt={item.name} className="h-16 w-14 rounded-lg object-cover" />
                   <div className="flex-1 text-sm">
                     <p className="font-medium">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">{item.color} · Size {item.size} · Qty {item.quantity}</p>
+                    <p className="text-xs text-muted-foreground">Size {item.size} · Qty {item.quantity}</p>
                   </div>
                   <p className="text-sm font-medium">{formatPrice(item.price * item.quantity)}</p>
                 </div>

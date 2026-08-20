@@ -28,16 +28,22 @@ export function BrandStory() {
         <div className="flex items-center bg-secondary px-6 py-20 md:px-16 md:py-32">
           <Reveal>
             <p className="eyebrow">The Story Line</p>
-            <h2 className="heading-2 mt-4">Crafted With Intention, Worn For Decades</h2>
+            <h2 className="heading-2 mt-4">From Two Best Friends, With Love.</h2>
             <div className="mt-6 space-y-4 text-sm leading-relaxed text-muted-foreground">
               <p>
-                DEEVUH was founded on a single belief: that true luxury is quiet. No loud logos, no seasonal churn. Just garments made to last, from materials sourced at the world&rsquo;s finest mills.
+                Deevuh was born from a shared love for fashion and a dream to create something meaningful together.
               </p>
               <p>
-                Every piece is designed in-house and produced in small batches by artisans who have spent decades perfecting their craft. We work with mills in Italy, Scotland, and Japan that share our commitment to responsible sourcing and uncompromising quality.
+                Proudly made in India, every piece is crafted with care by talented artisans and karigars who bring our designs to life. Behind every stitch is craftsmanship, passion, and countless hours of dedication.
               </p>
               <p>
-                This is clothing designed to be worn, loved, and passed on. Not discarded.
+                We&rsquo;re not here to chase trends. We don&rsquo;t want to create clothes that live in your wardrobe. We want to create pieces you reach for when you want to feel like the best version of yourself.
+              </p>
+              <p>
+                From two best friends to every girl who chooses Deevuh &mdash; thank you for being part of this dream.
+              </p>
+              <p>
+                This is more than fashion for us. It&rsquo;s our heart, our story, and everything we love stitched into every piece. &hearts;
               </p>
             </div>
             <Link href="/about" className="group mt-8 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] transition-all hover:gap-3">

@@ -193,7 +193,7 @@ export default function AdminOrdersPage() {
       `Email: ${order.customerEmail || order.email}`,
       '',
       'Items:',
-      ...order.items.map((i) => `  ${i.name} (${i.color}, ${i.size}) x${i.quantity} - ${formatPrice(i.price * i.quantity)}`),
+      ...order.items.map((i) => `  ${i.name} (${i.size}) x${i.quantity} - ${formatPrice(i.price * i.quantity)}`),
       '',
       `Subtotal: ${formatPrice(order.subtotal)}`,
       order.discount > 0 ? `Discount (${order.couponCode || 'Coupon'}): -${formatPrice(order.discount)}` : '',
@@ -314,7 +314,7 @@ export default function AdminOrdersPage() {
                     <div key={i} className="flex gap-3 border-b border-border/50 py-2 last:border-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.image} alt={item.name} className="h-12 w-10 rounded object-cover" />
-                      <div className="flex-1"><p className="text-xs font-medium">{item.name}</p><p className="text-xs text-muted-foreground">{item.color} · {item.size} · Qty {item.quantity}</p></div>
+                      <div className="flex-1"><p className="text-xs font-medium">{item.name}</p><p className="text-xs text-muted-foreground">{item.size} · Qty {item.quantity}</p></div>
                       <p className="text-xs font-medium">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   ))

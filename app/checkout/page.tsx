@@ -298,7 +298,7 @@ export default function CheckoutPage() {
                     <img src={item.image} alt={item.name} className="h-16 w-14 rounded-lg object-cover" />
                     <div className="flex-1 text-sm">
                       <p className="font-medium leading-tight">{item.name}</p>
-                      <p className="text-xs text-muted-foreground">{item.color} · {item.size} · Qty {item.quantity}</p>
+                      <p className="text-xs text-muted-foreground">{item.size} · Qty {item.quantity}</p>
                       <p className="mt-1">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   </div>

@@ -27,7 +27,7 @@ const blankProduct = (): Product => ({
   reviewCount: 0,
   stock: 10,
   shippingInfo: 'Free express shipping. Ships within 2 business days.',
-  returnPolicy: '30-day returns on unworn items with original tags.',
+  returnPolicy: '7-day easy returns on unworn items with original tags.',
   featured: false,
   isNew: true,
   bestSeller: false,
@@ -215,11 +215,8 @@ function ProductEditorModal({ product, isNew, onSave, onClose, allProducts }: { 
   const addSize = () => setForm((p) => ({ ...p, sizes: [...p.sizes, { name: '', price: p.price || 0 }] }));
   const removeSize = (i: number) => setForm((p) => ({ ...p, sizes: p.sizes.filter((_, idx) => idx !== i) }));
 
-  const setVariant = (i: number, field: 'color' | 'colorHex', value: string) =>
-    setForm((p) => ({ ...p, variants: p.variants.map((v, idx) => idx === i ? { ...v, [field]: value } : v) }));
-
   const setVariantImage = (i: number, url: string) =>
-    setForm((p) => ({ ...p, variants: p.variants.map((v, idx) => idx === i ? { ...v, images: url ? [{ url, alt: v.color }] : [] } : v) }));
+    setForm((p) => ({ ...p, variants: p.variants.map((v, idx) => idx === i ? { ...v, images: url ? [{ url, alt: 'Product image' }] : [] } : v) }));
 
   const handleUpload = async (i: number, file: File | null) => {
     if (!file) return;
@@ -242,9 +239,6 @@ function ProductEditorModal({ product, isNew, onSave, onClose, allProducts }: { 
     }
   };
 
-  const addVariant = () => setForm((p) => ({ ...p, variants: [...p.variants, { color: '', colorHex: '#888888', images: [] }] }));
-  const removeVariant = (i: number) => setForm((p) => ({ ...p, variants: p.variants.filter((_, idx) => idx !== i) }));
-
   const toggleComboItem = (candidate: Product) => {
     setForm((p) => {
       const existing = p.comboItems ?? [];
@@ -263,15 +257,14 @@ function ProductEditorModal({ product, isNew, onSave, onClose, allProducts }: { 
     if (!form.name.trim()) { toast.error('Name is required'); return; }
     const sizes = form.sizes.filter((s) => s.name.trim());
     if (sizes.length === 0) { toast.error('Add at least one size'); return; }
-    const variants = form.variants.filter((v) => v.color.trim());
-    if (variants.length === 0) { toast.error('Add at least one color'); return; }
     if (form.category === 'combos' && (form.comboItems?.length ?? 0) < 2) { toast.error('A combo needs at least 2 items'); return; }
 
     setSaving(true);
     try {
       const minPrice = Math.min(...sizes.map((s) => s.price));
       const slug = form.slug || slugify(form.name);
-      const imageUrl = variants[0].images[0]?.url ?? 'https://images.pexels.com/photos/769733/pexels-photo-769733.jpeg?auto=compress&cs=tinysrgb&w=1200';
+      const imageUrl = form.variants[0]?.images[0]?.url ?? 'https://images.pexels.com/photos/769733/pexels-photo-769733.jpeg?auto=compress&cs=tinysrgb&w=1200';
+      const variants = [{ color: 'Default', colorHex: '#888888', images: form.variants[0]?.images.length ? form.variants[0].images : [{ url: imageUrl, alt: 'Product image' }] }];
       const saved: Product = {
         ...form,
         slug,
@@ -338,26 +331,22 @@ function ProductEditorModal({ product, isNew, onSave, onClose, allProducts }: { 
             </div>
           </div>
 
-          {/* Colors */}
+          {/* Product Images */}
           <div className="rounded-xl border border-border p-4">
-            <div className="flex items-center justify-between">
-              <p className="eyebrow">Colors</p>
-              <button onClick={addVariant} className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs transition-colors hover:bg-accent"><Plus className="h-3 w-3" /> Add Color</button>
+            <div className="flex items-center gap-2">
+              <p className="eyebrow">Product Images</p>
             </div>
             <div className="mt-3 space-y-2">
-              {form.variants.map((v, i) => (
-                <div key={i} className="grid grid-cols-[1fr_auto_1fr_auto_auto] items-center gap-2">
-                  <input value={v.color} onChange={(e) => setVariant(i, 'color', e.target.value)} placeholder="Color name" className={inputClass} />
-                  <input type="color" value={v.colorHex} onChange={(e) => setVariant(i, 'colorHex', e.target.value)} className="h-10 w-14 cursor-pointer rounded-lg border border-border bg-background p-1" />
-                  <input value={v.images[0]?.url ?? ''} onChange={(e) => setVariantImage(i, e.target.value)} placeholder="Image URL (optional)" className={inputClass} />
+              {form.variants[0] && (
+                <div className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_auto]">
+                  <input value={form.variants[0].images[0]?.url ?? ''} onChange={(e) => setVariantImage(0, e.target.value)} placeholder="Image URL (optional)" className={inputClass} />
                   <label className="relative flex cursor-pointer items-center gap-1 rounded-md border border-border px-3 py-2 text-xs transition-colors hover:bg-accent">
-                    {uploadingIdx === i ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
-                    {uploadingIdx === i ? 'Uploading' : 'Upload'}
-                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingIdx !== null} onChange={(e) => { handleUpload(i, e.target.files?.[0] ?? null); e.target.value = ''; }} />
+                    {uploadingIdx === 0 ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <UploadCloud className="h-3.5 w-3.5" />}
+                    {uploadingIdx === 0 ? 'Uploading' : 'Upload'}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploadingIdx !== null} onChange={(e) => { handleUpload(0, e.target.files?.[0] ?? null); e.target.value = ''; }} />
                   </label>
-                  <button onClick={() => removeVariant(i)} className="rounded-md border border-destructive p-2 text-destructive transition-colors hover:bg-destructive/10" aria-label="Remove color"><Trash2 className="h-3.5 w-3.5" /></button>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 

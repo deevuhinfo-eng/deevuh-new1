@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles, Truck, ShieldCheck } from 'lucide-react';
+import { Sparkles, Truck } from 'lucide-react';
 import { useConfig } from '@/lib/use-config';
 
 export function AnnouncementBar() {
@@ -9,7 +9,6 @@ export function AnnouncementBar() {
   if (!banner) return null;
   const items = [
     { icon: Truck, text: banner },
-    { icon: ShieldCheck, text: '30-day easy returns' },
     { icon: Sparkles, text: 'Hand-finished in small batches' },
   ];
   const loop = [...items, ...items];

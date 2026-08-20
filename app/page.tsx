@@ -3,7 +3,6 @@ import { AnnouncementBar } from '@/components/announcement-bar';
 import { Hero } from '@/components/sections/hero';
 import { CollectionSection } from '@/components/sections/collection-section';
 import { BrandStory } from '@/components/sections/brand-story';
-import { SaleCountdown } from '@/components/sections/sale-countdown';
 import { ReviewsSection } from '@/components/sections/reviews';
 import { NewsletterSection } from '@/components/sections/newsletter';
 import { products as fallbackProducts } from '@/lib/products';
@@ -46,7 +45,6 @@ export default async function HomePage() {
       <BrandStory />
       {section('new', 'Just Arrived', 'New Arrivals', 'The latest additions to the atelier.', newArrivals)}
       {section('bestseller', 'Client Favourites', 'Best Sellers', 'The pieces our clients return to again and again.', bestSellers)}
-      <SaleCountdown />
       {section('limited', 'By Appointment', 'Limited Edition', 'Numbered pieces in extremely limited quantities.', limited)}
       {section('summer', 'The Season', 'Summer Collection', 'Lightweight fabrics for the warmer months.', summer)}
       <ReviewsSection />

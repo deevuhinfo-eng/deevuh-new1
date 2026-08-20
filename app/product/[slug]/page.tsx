@@ -12,6 +12,12 @@ import { formatPrice, discountPercent } from '@/lib/format';
 import { useStore } from '@/lib/store';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from '@/components/ui/carousel';
 import type { Product } from '@/lib/types';
 
 export default function ProductPage() {
@@ -25,6 +31,7 @@ export default function ProductPage() {
   const addRecentlyViewed = useStore((s) => s.addRecentlyViewed);
 
   const [activeImage, setActiveImage] = useState(0);
+  const [carouselApi, setCarouselApi] = useState<CarouselApi>(undefined);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [qty, setQty] = useState(1);
@@ -57,6 +64,16 @@ export default function ProductPage() {
       if (product.sizes.length === 1) setSelectedSize(product.sizes[0].name);
     }
   }, [product, addRecentlyViewed]);
+
+  useEffect(() => {
+    if (!carouselApi) return;
+    const onSelect = () => setActiveImage(carouselApi.selectedScrollSnap());
+    carouselApi.on('select', onSelect);
+    onSelect();
+    return () => {
+      carouselApi.off('select', onSelect);
+    };
+  }, [carouselApi]);
 
   if (loading) return <SiteShell><div className="container-lux flex min-h-[60vh] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-foreground/30 border-t-foreground" /></div></SiteShell>;
 
@@ -127,27 +144,46 @@ export default function ProductPage() {
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
           {/* Gallery */}
           <div className="flex flex-col gap-4 lg:flex-row-reverse">
-            <div
-              className="relative aspect-[3/4] flex-1 cursor-zoom-in overflow-hidden rounded-2xl bg-muted"
-              onMouseEnter={() => setZoomed(true)}
-              onMouseLeave={() => setZoomed(false)}
-              onMouseMove={handleZoomMove}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={product.images[activeImage].url}
-                alt={product.images[activeImage].alt}
-                className="h-full w-full object-cover transition-transform duration-300"
-                style={zoomed ? { transform: `scale(2)`, transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
-              />
-              {sizeDisc > 0 && <span className="absolute left-4 top-4 rounded-full bg-destructive px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-destructive-foreground">-{sizeDisc}%</span>}
-              {product.limitedEdition && <span className="absolute right-4 top-4 rounded-full bg-foreground px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-background">Limited Edition</span>}
-            </div>
-            <div className="flex gap-3 lg:flex-col">
+            <Carousel className="relative w-full" setApi={setCarouselApi} opts={{ align: 'start' }}>
+              <CarouselContent className="ml-0">
+                {product.images.map((img, i) => (
+                  <CarouselItem
+                    key={i}
+                    className="relative aspect-[3/4] basis-full cursor-zoom-in overflow-hidden rounded-2xl bg-muted pl-0"
+                    onMouseEnter={() => setZoomed(true)}
+                    onMouseLeave={() => setZoomed(false)}
+                    onMouseMove={handleZoomMove}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.url}
+                      alt={img.alt}
+                      className="h-full w-full object-cover transition-transform duration-300"
+                      style={zoomed && i === activeImage ? { transform: `scale(2)`, transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : undefined}
+                    />
+                    {i === 0 && sizeDisc > 0 && <span className="absolute left-4 top-4 rounded-full bg-destructive px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-destructive-foreground">-{sizeDisc}%</span>}
+                    {i === 0 && product.limitedEdition && <span className="absolute right-4 top-4 rounded-full bg-foreground px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-background">Limited Edition</span>}
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {product.images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 lg:hidden">
+                  {product.images.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => carouselApi?.scrollTo(i)}
+                      aria-label={`Go to image ${i + 1}`}
+                      className={cn('h-1.5 rounded-full transition-all', activeImage === i ? 'w-5 bg-foreground' : 'w-1.5 bg-foreground/25')}
+                    />
+                  ))}
+                </div>
+              )}
+            </Carousel>
+            <div className="hidden gap-3 lg:flex lg:flex-col">
               {product.images.map((img, i) => (
                 <button
                   key={i}
-                  onClick={() => setActiveImage(i)}
+                  onClick={() => { setActiveImage(i); carouselApi?.scrollTo(i); }}
                   className={cn('zoom-container h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 bg-muted transition-all lg:h-24 lg:w-20', activeImage === i ? 'border-foreground' : 'border-transparent opacity-60 hover:opacity-100')}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -200,27 +236,6 @@ export default function ProductPage() {
                   </ul>
                 </div>
               )}
-
-              {/* Color selection */}
-              <div className="mt-8">
-                <div className="flex items-center justify-between">
-                  <p className="eyebrow">Color</p>
-                  <span className="text-sm text-muted-foreground">{selectedColor}</span>
-                </div>
-                <div className="mt-3 flex gap-3">
-                  {product.variants.map((v) => (
-                    <button
-                      key={v.color}
-                      onClick={() => setSelectedColor(v.color)}
-                      className={cn('flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all', selectedColor === v.color ? 'border-foreground' : 'border-border hover:border-muted-foreground')}
-                      aria-label={v.color}
-                      title={v.color}
-                    >
-                      <span className="h-7 w-7 rounded-full border border-border" style={{ backgroundColor: v.colorHex }} />
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Size selection */}
               <div className="mt-6">

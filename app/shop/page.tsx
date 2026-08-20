@@ -6,7 +6,7 @@ import { SiteShell } from '@/components/site-shell';
 import { ProductCard } from '@/components/product-card';
 import { products as fallbackProducts, categoryLabels } from '@/lib/products';
 import { formatPrice } from '@/lib/format';
-import { SlidersHorizontal, X, Search, Check } from 'lucide-react';
+import { SlidersHorizontal, X, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import type { Product, ProductCategory } from '@/lib/types';
@@ -18,7 +18,6 @@ const sortOptions = [
   { value: 'price-desc', label: 'Price: High to Low' },
 ];
 
-const allColors = Array.from(new Set(fallbackProducts.flatMap((p) => p.variants.map((v) => v.color))));
 const allSizes = Array.from(new Set(fallbackProducts.flatMap((p) => p.sizes.map((s) => s.name))));
 const maxPrice = Math.max(...fallbackProducts.map((p) => p.price));
 
@@ -40,11 +39,9 @@ function ShopPageInner() {
   const [tag, setTag] = useState<string | null>(searchParams.get('tag'));
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest');
 
-  const allColors = useMemo(() => Array.from(new Set(products.flatMap((p) => p.variants.map((v) => v.color)))), [products]);
   const allSizes = useMemo(() => Array.from(new Set(products.flatMap((p) => p.sizes.map((s) => s.name)))), [products]);
   const maxPrice = useMemo(() => (products.length ? Math.max(...products.map((p) => p.price)) : 0), [products]);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, maxPrice]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
 
   useEffect(() => {
@@ -62,7 +59,6 @@ function ShopPageInner() {
     if (searchParams.get('sort')) setSortBy(searchParams.get('sort')!);
   }, [searchParams]);
 
-  const toggleColor = (c: string) => setSelectedColors((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
   const toggleSize = (s: string) => setSelectedSizes((p) => (p.includes(s) ? p.filter((x) => x !== s) : [...p, s]));
 
   const filtered = useMemo(() => {
@@ -74,7 +70,6 @@ function ShopPageInner() {
     if (category) result = result.filter((p) => p.category === category);
     if (tag) result = result.filter((p) => p.tags.includes(tag as any));
     result = result.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
-    if (selectedColors.length) result = result.filter((p) => p.variants.some((v) => selectedColors.includes(v.color)));
     if (selectedSizes.length) result = result.filter((p) => p.sizes.some((s) => selectedSizes.includes(s.name)));
 
     switch (sortBy) {
@@ -84,12 +79,12 @@ function ShopPageInner() {
       default: result = [...result].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
     return result;
-  }, [products, query, category, tag, sortBy, priceRange, selectedColors, selectedSizes]);
+  }, [products, query, category, tag, sortBy, priceRange, selectedSizes]);
 
   const clearAll = () => {
-    setQuery(''); setCategory(null); setTag(null); setPriceRange([0, maxPrice]); setSelectedColors([]); setSelectedSizes([]); router.push('/shop');
+    setQuery(''); setCategory(null); setTag(null); setPriceRange([0, maxPrice]); setSelectedSizes([]); router.push('/shop');
   };
-  const activeFilterCount = (category ? 1 : 0) + (tag ? 1 : 0) + selectedColors.length + selectedSizes.length + (priceRange[0] !== 0 || priceRange[1] !== maxPrice ? 1 : 0);
+  const activeFilterCount = (category ? 1 : 0) + (tag ? 1 : 0) + selectedSizes.length + (priceRange[0] !== 0 || priceRange[1] !== maxPrice ? 1 : 0);
 
   const FilterContent = () => (
     <div className="space-y-8">
@@ -110,20 +105,6 @@ function ShopPageInner() {
           <span>{formatPrice(priceRange[1])}</span>
         </div>
         <input type="range" min={0} max={maxPrice} step={50} value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value)])} className="mt-2 w-full" />
-      </div>
-
-      <div>
-        <p className="eyebrow mb-3">Color</p>
-        <div className="space-y-2">
-          {allColors.map((c) => (
-            <button key={c} onClick={() => toggleColor(c)} className="flex items-center gap-2 text-sm transition-colors hover:text-foreground">
-              <span className={cn('flex h-4 w-4 items-center justify-center rounded border', selectedColors.includes(c) ? 'border-foreground bg-foreground text-background' : 'border-border')}>
-                {selectedColors.includes(c) && <Check className="h-3 w-3" />}
-              </span>
-              {c}
-            </button>
-          ))}
-        </div>
       </div>
 
       <div>

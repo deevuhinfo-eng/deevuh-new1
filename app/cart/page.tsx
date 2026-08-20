@@ -82,7 +82,7 @@ export default function CartPage() {
                   <div className="flex justify-between gap-4">
                     <div>
                       <Link href={`/product/${item.slug}`} className="font-display text-lg transition-colors hover:text-muted-foreground">{item.name}</Link>
-                      <p className="mt-1 text-xs text-muted-foreground">{item.color} · Size {item.size}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Size {item.size}</p>
                     </div>
                     <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
                   </div>

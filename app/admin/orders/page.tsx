@@ -49,6 +49,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selected, setSelected] = useState<Order | null>(null);
   const [filter, setFilter] = useState('all');
+  const [emailFilter, setEmailFilter] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
@@ -99,6 +100,14 @@ export default function AdminOrdersPage() {
       try { setOrders(JSON.parse(localStorage.getItem('maison-noir-orders') || '[]')); } catch {}
     }
     fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get('email');
+      if (email) setEmailFilter(email);
+    } catch {}
   }, []);
 
   const updateStatus = async (orderId: string, status: string) => {
@@ -160,7 +169,10 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const filtered = filter === 'all' ? orders : orders.filter((o) => o.orderStatus === filter);
+  const emailQuery = emailFilter.trim().toLowerCase();
+  const filtered = orders
+    .filter((o) => filter === 'all' || o.orderStatus === filter)
+    .filter((o) => !emailQuery || ((o.customerEmail || o.email) || '').toLowerCase().includes(emailQuery));
 
   const exportCSV = () => {
     const headers = ['Order ID', 'Customer', 'Email', 'Phone', 'Total', 'Status', 'Date', 'Payment Method'];
@@ -232,7 +244,19 @@ export default function AdminOrdersPage() {
             {s.label} ({orders.filter((o) => o.orderStatus === s.value).length})
           </button>
         ))}
+        <input
+          value={emailFilter}
+          onChange={(e) => setEmailFilter(e.target.value)}
+          placeholder="Filter by email..."
+          className="ml-auto w-full rounded-lg border border-border bg-transparent px-4 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground sm:w-64"
+        />
       </div>
+
+      {emailFilter && (
+        <p className="text-xs text-muted-foreground">
+          Showing orders for <span className="font-medium text-foreground">{emailFilter}</span> · <button onClick={() => setEmailFilter('')} className="link-underline">Clear</button>
+        </p>
+      )}
 
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-border bg-background py-16 text-center">

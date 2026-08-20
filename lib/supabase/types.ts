@@ -159,6 +159,7 @@ export interface ReviewRow {
   product_id: string | null;
   date: string;
   verified: boolean;
+  email: string | null;
 }
 
 export type ReviewInsert = Omit<ReviewRow, 'id'>;

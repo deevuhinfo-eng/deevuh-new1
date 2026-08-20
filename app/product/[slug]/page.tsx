@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import type { Product } from '@/lib/types';
+import type { Product, Review } from '@/lib/types';
 
 export default function ProductPage() {
   const params = useParams();
@@ -46,6 +46,12 @@ export default function ProductPage() {
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'shipping' | 'returns'>('description');
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, title: '', body: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
   useEffect(() => {
     async function fetchProduct() {
       try {
@@ -65,12 +71,54 @@ export default function ProductPage() {
   }, [slug]);
 
   useEffect(() => {
-    if (product) {
-      addRecentlyViewed(product.id);
-      setSelectedColor(product.variants[0]?.color ?? null);
-      if (product.sizes.length === 1) setSelectedSize(product.sizes[0].name);
-    }
+    if (!product) return;
+    addRecentlyViewed(product.id);
+    setSelectedColor(product.variants[0]?.color ?? null);
+    if (product.sizes.length === 1) setSelectedSize(product.sizes[0].name);
   }, [product, addRecentlyViewed]);
+
+  useEffect(() => {
+    if (!product?.id) return;
+    let active = true;
+    fetch(`/api/reviews?productId=${product.id}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (active && Array.isArray(json.reviews)) setReviews(json.reviews);
+      })
+      .catch(() => {})
+      .finally(() => { if (active) setReviewSubmitted(false); });
+    return () => { active = false; };
+  }, [product?.id]);
+
+  const submitReview = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!product) return;
+    setSubmitting(true);
+    setReviewError(null);
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: product.id, ...reviewForm }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setReviewError(json.error || 'Failed to submit review');
+        return;
+      }
+      setReviews((prev) => [json.review, ...prev.filter((r) => r.id !== json.review.id)]);
+      setReviewForm({ rating: 5, title: '', body: '' });
+      setReviewSubmitted(true);
+      if (typeof json.rating === 'number' && typeof json.reviewCount === 'number') {
+        setProduct((p) => p ? { ...p, rating: json.rating, reviewCount: json.reviewCount } : p);
+      }
+      toast.success('Review published. Thank you!');
+    } catch {
+      setReviewError('Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (!carouselApi) return;
@@ -364,6 +412,113 @@ export default function ProductPage() {
                 </AnimatePresence>
               </div>
             </motion.div>
+          </div>
+        </div>
+
+        {/* Reviews */}
+        <div className="mt-20 grid gap-12 md:mt-28 lg:grid-cols-5 lg:gap-16">
+          <div className="lg:col-span-3">
+            <p className="eyebrow">Customer Reviews</p>
+            <h2 className="heading-3 mt-2">
+              {product.rating > 0 ? `${product.rating} / 5` : 'No reviews yet'}
+              <span className="ml-3 align-middle text-sm font-normal text-muted-foreground">({reviews.length} review{reviews.length === 1 ? '' : 's'})</span>
+            </h2>
+
+            {reviews.length === 0 ? (
+              <p className="mt-6 text-sm text-muted-foreground">Be the first to review this piece. Only verified buyers can leave a review.</p>
+            ) : (
+              <div className="mt-8 space-y-6">
+                {reviews.map((r) => (
+                  <div key={r.id} className="rounded-2xl border border-border p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium">{r.name}</p>
+                        {r.verified && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-success">
+                            <Check className="h-3 w-3" /> Verified Purchase
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted-foreground">{new Date(r.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star key={i} className={cn('h-3.5 w-3.5', i < r.rating ? 'fill-foreground text-foreground' : 'text-muted-foreground/30')} />
+                      ))}
+                    </div>
+                    {r.title && <p className="mt-3 text-sm font-semibold">{r.title}</p>}
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{r.body}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="lg:col-span-2">
+            <div className="rounded-2xl border border-border p-6">
+              <p className="eyebrow">Write a Review</p>
+
+              {reviewSubmitted && (
+                <div className="mt-4 rounded-xl bg-success/10 p-4 text-sm text-success">
+                  Thank you! Your review was published instantly.
+                </div>
+              )}
+
+              {reviewError && (
+                <div className="mt-4 rounded-xl bg-destructive/10 p-4 text-sm text-destructive">
+                  <p>{reviewError}</p>
+                  {reviewError.toLowerCase().includes('login') && (
+                    <Link href="/account" className="link-underline mt-2 inline-block font-medium text-foreground">
+                      Login to write a review
+                    </Link>
+                  )}
+                </div>
+              )}
+
+              {!reviewSubmitted && (
+                <form onSubmit={submitReview} className="mt-5 space-y-4">
+                  <div>
+                    <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Your Rating</p>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setReviewForm((f) => ({ ...f, rating: i + 1 }))}
+                          aria-label={`${i + 1} star${i === 4 ? '' : 's'}`}
+                        >
+                          <Star className={cn('h-6 w-6 transition-colors', i < reviewForm.rating ? 'fill-foreground text-foreground' : 'text-muted-foreground/30 hover:text-foreground/50')} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <input
+                      value={reviewForm.title}
+                      onChange={(e) => setReviewForm((f) => ({ ...f, title: e.target.value }))}
+                      placeholder="Title (optional)"
+                      maxLength={80}
+                      className="w-full rounded-lg border border-border bg-transparent px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+                    />
+                  </div>
+                  <div>
+                    <textarea
+                      value={reviewForm.body}
+                      onChange={(e) => setReviewForm((f) => ({ ...f, body: e.target.value }))}
+                      placeholder="Share your experience..."
+                      required
+                      rows={4}
+                      maxLength={600}
+                      className="w-full resize-none rounded-lg border border-border bg-transparent px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
+                    />
+                  </div>
+                  <button type="submit" disabled={submitting} className="btn-lux w-full bg-foreground text-background disabled:opacity-50">
+                    {submitting ? 'Publishing...' : 'Publish Review'}
+                  </button>
+                  <p className="text-xs text-muted-foreground">Only verified buyers can write a review. One review per item.</p>
+                </form>
+              )}
+            </div>
           </div>
         </div>
 

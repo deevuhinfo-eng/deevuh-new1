@@ -248,7 +248,9 @@ export default function ProductPage() {
               <div className="mt-6">
                 <div className="flex items-center justify-between">
                   <p className="eyebrow">Size</p>
-                  <button onClick={() => setSizeGuideOpen(true)} className="text-xs text-muted-foreground underline transition-colors hover:text-foreground">Size Guide</button>
+                  {product.category !== 'bottomwear' && (
+                    <button onClick={() => setSizeGuideOpen(true)} className="text-xs text-muted-foreground underline transition-colors hover:text-foreground">Size Guide</button>
+                  )}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {product.sizes.map((s) => (
@@ -385,14 +387,50 @@ export default function ProductPage() {
       <Dialog open={sizeGuideOpen} onOpenChange={setSizeGuideOpen}>
         <DialogContent className="max-h-[85vh] w-[calc(100vw-2rem)] max-w-xl overflow-y-auto p-4 md:p-6">
           <DialogHeader>
-            <DialogTitle className="text-center">Size Guide</DialogTitle>
+            <DialogTitle className="sr-only">Size Guide</DialogTitle>
           </DialogHeader>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={product.category === 'bottomwear' ? '/size-charts/skirt.jpg' : '/size-charts/co-ord-sets.jpg'}
-            alt={`${product.name} size chart`}
-            className="mx-auto w-full max-w-md object-contain"
-          />
+          <div className="text-center">
+            <p className="eyebrow">DEEVUH</p>
+            <h3 className="font-display text-xl mt-2">The Vatavaran Coordset</h3>
+            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-muted-foreground">Official Size Guide</p>
+          </div>
+
+          <div className="mt-6 overflow-hidden rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-accent/50 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                  <th className="px-4 py-3 font-medium">Size</th>
+                  <th className="px-4 py-3 font-medium">Bust (Top)</th>
+                  <th className="px-4 py-3 font-medium">High Waist (Skirt Start)</th>
+                  <th className="px-4 py-3 font-medium">Normal Waist (Reference)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { size: 'XS', bust: '30"', highWaist: '26"', normalWaist: '28"' },
+                  { size: 'S', bust: '32"', highWaist: '28"', normalWaist: '30"' },
+                  { size: 'M', bust: '34"', highWaist: '30"', normalWaist: '32"' },
+                  { size: 'L', bust: '36"', highWaist: '34"', normalWaist: '36"' },
+                ].map((row) => (
+                  <tr key={row.size} className="border-b border-border/60 last:border-0">
+                    <td className="px-4 py-3 font-medium text-foreground">{row.size}</td>
+                    <td className="px-4 py-3">{row.bust}</td>
+                    <td className="px-4 py-3">{row.highWaist}</td>
+                    <td className="px-4 py-3">{row.normalWaist}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-6">
+            <p className="eyebrow">Designer Fit Tips</p>
+            <ul className="mt-3 space-y-2 text-xs uppercase tracking-[0.15em] text-muted-foreground">
+              <li className="flex gap-2"><span className="text-foreground">&bull;</span> Skirt is designed to sit exactly, starting precisely at your upper waist.</li>
+              <li className="flex gap-2"><span className="text-foreground">&bull;</span> 'Normal Waist' is included so you can easily reference your standard sizing.</li>
+              <li className="flex gap-2"><span className="text-foreground">&bull;</span> Prioritize your upper waist, prioritize its exact upper waist measurement.</li>
+            </ul>
+          </div>
         </DialogContent>
       </Dialog>
     </SiteShell>

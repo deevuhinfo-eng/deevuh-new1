@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { createAdminClient } from './supabase/admin';
 import type { Database } from './supabase/types';
 
 export async function getAdminSession() {
@@ -32,8 +33,19 @@ export async function getAdminSession() {
 
 export async function requireAdmin() {
   const session = await getAdminSession();
-  if (!session) {
+  if (!session || !session.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const { data, error } = await createAdminClient()
+    .from('admin_users')
+    .select('email')
+    .eq('email', session.user.email)
+    .maybeSingle();
+  if (error) {
+    return NextResponse.json({ error: 'Server error checking admin access' }, { status: 500 });
+  }
+  if (!data) {
+    return NextResponse.json({ error: 'Forbidden: not an admin' }, { status: 403 });
   }
   return null;
 }

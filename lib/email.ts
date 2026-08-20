@@ -54,7 +54,7 @@ function itemRows(items: OrderEmailData['items']): string {
             </td>
             <td style="vertical-align:top;font-size:14px">
               <strong style="display:block;margin-bottom:2px">${i.name}</strong>
-              <span style="color:#888;font-size:12px">${i.color} · Size ${i.size} · Qty ${i.quantity}</span>
+              <span style="color:#888;font-size:12px">Size ${i.size} · Qty ${i.quantity}</span>
             </td>
             <td width="80" style="vertical-align:top;text-align:right;font-size:14px;font-weight:600;white-space:nowrap">
               ${formatPrice(i.price * i.quantity)}

@@ -43,7 +43,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const { createClient } = await import('@/lib/supabase/client');
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
-        if (session) { setAuthenticated(); setAuthChecked(true); return; }
+        if (session) {
+          const res = await fetch('/api/admin/check');
+          const json = await res.json();
+          if (json.admin) { setAuthenticated(); setAuthChecked(true); return; }
+        }
       } catch {}
 
       // No Supabase session — redirect to login instead of relying on local state

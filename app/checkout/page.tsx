@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { ShieldCheck, CreditCard, Smartphone, Building2, Wallet, Banknote, Tag, X, ArrowRight, ArrowLeft, Check, UserCheck, Loader2 } from 'lucide-react';
+import { ShieldCheck, CreditCard, Smartphone, Building2, Wallet, Banknote, Tag, X, ArrowRight, ArrowLeft, Check, UserCheck, Loader2, AlertTriangle } from 'lucide-react';
 import { SiteShell } from '@/components/site-shell';
 import { useStore, cartTotal } from '@/lib/store';
 import { formatPrice, generateOrderId } from '@/lib/format';
@@ -273,6 +273,13 @@ export default function CheckoutPage() {
                   </button>
                 ))}
               </div>
+              <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-800">
+                <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <div>
+                  <p>After completing the payment, please wait for 15-20 seconds. If not redirected, please reload the page. Please do not leave the page and do not close the browser.</p>
+                  <p className="mt-1">भुगतान पूरा करने के बाद कृपया 15-20 सेकंड प्रतीक्षा करें। यदि रीडायरेक्ट न हो तो कृपया पेज को रीलोड करें। कृपया पेज छोड़कर न जाएं और ब्राउज़र बंद न करें।</p>
+                </div>
+              </div>
               {isCod && (
                 <div className="mt-3 rounded-lg border border-border bg-accent/40 p-4 text-sm">
                   <p className="font-medium">Cash on Delivery</p>
@@ -332,6 +339,11 @@ export default function CheckoutPage() {
                     <div className="flex justify-between text-sm text-warning"><span>Balance Due on Delivery</span><span className="font-medium">{formatPrice(dueOnDelivery)}</span></div>
                   </>
                 )}
+              </div>
+
+              <div className="mt-4 text-center">
+                <p className="text-xs font-bold leading-relaxed text-foreground">After completing the payment, please wait for 15-20 seconds. If not redirected, please reload the page. Please do not leave the page and do not close the browser.</p>
+                <p className="mt-1 text-xs font-bold leading-relaxed text-foreground">भुगतान पूरा करने के बाद कृपया 15-20 सेकंड प्रतीक्षा करें। यदि रीडायरेक्ट न हो तो कृपया पेज को रीलोड करें। कृपया पेज छोड़कर न जाएं और ब्राउज़र बंद न करें।</p>
               </div>
 
               <button onClick={handleCheckout} disabled={processing} className="btn-lux mt-6 w-full bg-foreground text-background disabled:opacity-70">

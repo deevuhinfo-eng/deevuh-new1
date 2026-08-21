@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     const newStatus = success ? 'paid' : 'failed';
     const updates: Record<string, any> = {
       payment_status: success ? (udf2 === 'cod' ? 'cod_confirmed' : 'paid') : 'failed',
-      order_status: success ? (udf2 === 'cod' ? 'cod_confirmed' : 'pending') : 'cancelled',
+      order_status: success ? 'order_received' : 'cancelled',
       pg_txn_id: mihpayid || null,
       pg_status: payuStatus || null,
       pg_error: success ? null : (hashValid ? (error || (payuStatus === 'success' ? 'order verification failed' : payuStatus)) : 'hash_mismatch'),
@@ -81,38 +81,40 @@ export async function POST(request: Request) {
     const { error: updateError } = await getSupabase().from('orders').update(updates).eq('order_id', orderId);
     if (updateError) console.error('order update failed:', updateError.message);
 
-    if (success) {
-      await decrementStock(orderId);
-    }
-
-    // Build email payload
-    const { data: items } = await getSupabase().from('order_items').select('*').eq('order_id', orderId);
-
-    const emailPayload = {
-      orderId,
-      txnId: mihpayid || txnid,
-      name: orderRow.customer_name,
-      email: orderRow.customer_email,
-      phone: orderRow.customer_phone,
-      address: orderRow.address,
-      city: orderRow.city,
-      state: orderRow.state,
-      country: orderRow.country,
-      pincode: orderRow.pincode,
-      paymentMethod: udf2 || orderRow.payment_method,
-      items: items?.map((i: any) => ({ name: i.name, price: i.price, quantity: i.quantity, color: i.color, size: i.size, image: i.image })) || [],
-      subtotal: Number(orderRow.subtotal),
-      discount: Number(orderRow.discount),
-      shipping: Number(orderRow.shipping),
-      tax: Number(orderRow.tax),
-      grandTotal: Number(orderRow.grand_total),
-      codFee: (udf2 === 'cod' ? COD_FEE : 0),
-      dueOnDelivery: (udf2 === 'cod' ? Math.max(0, Number(orderRow.grand_total) - COD_FEE) : 0),
-    };
-
-    // Send emails only on success
-    if (success) {
+    // Fire-and-forget background tasks so user sees confirmation instantly
+    // Do NOT await — redirect happens immediately after DB update
+    void (async () => {
+      if (success) {
+        try {
+          await decrementStock(orderId);
+        } catch (e) {
+          console.error(`[Stock] ${orderId} decrement failed:`, e);
+        }
+      }
+      if (!success) return;
       try {
+        const { data: items } = await getSupabase().from('order_items').select('*').eq('order_id', orderId);
+        const emailPayload = {
+          orderId,
+          txnId: mihpayid || txnid,
+          name: orderRow.customer_name,
+          email: orderRow.customer_email,
+          phone: orderRow.customer_phone,
+          address: orderRow.address,
+          city: orderRow.city,
+          state: orderRow.state,
+          country: orderRow.country,
+          pincode: orderRow.pincode,
+          paymentMethod: udf2 || orderRow.payment_method,
+          items: items?.map((i: any) => ({ name: i.name, price: i.price, quantity: i.quantity, color: i.color, size: i.size, image: i.image })) || [],
+          subtotal: Number(orderRow.subtotal),
+          discount: Number(orderRow.discount),
+          shipping: Number(orderRow.shipping),
+          tax: Number(orderRow.tax),
+          grandTotal: Number(orderRow.grand_total),
+          codFee: (udf2 === 'cod' ? COD_FEE : 0),
+          dueOnDelivery: (udf2 === 'cod' ? Math.max(0, Number(orderRow.grand_total) - COD_FEE) : 0),
+        };
         let brand: { email: string; brand: string; address: string } | undefined;
         let merchantEmail: string | undefined;
         const { data: configs } = await getSupabase().from('site_config').select('*');
@@ -129,7 +131,7 @@ export async function POST(request: Request) {
       } catch (e) {
         console.error(`[OrderEmail] ${orderId} send error:`, e);
       }
-    }
+    })();
 
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
     if (success) {

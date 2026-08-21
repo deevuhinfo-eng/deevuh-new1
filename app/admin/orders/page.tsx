@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, FileText, Eye, X, Package, Truck, CheckCircle, XCircle, RotateCcw, Clock, Trash2, Mail } from 'lucide-react';
+import { Download, FileText, Eye, X, Package, Truck, CheckCircle, XCircle, RotateCcw, Clock, Trash2, Mail, ClipboardCheck } from 'lucide-react';
 import { formatPrice, formatDate, timeAgo } from '@/lib/format';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -38,6 +38,7 @@ interface Order {
 
 const statusOptions = [
   { value: 'pending', label: 'Payment Pending', icon: Clock, color: 'text-warning' },
+  { value: 'order_received', label: 'Order Received', icon: ClipboardCheck, color: 'text-success' },
   { value: 'packing', label: 'Packing', icon: Package, color: 'text-foreground' },
   { value: 'shipped', label: 'Shipped', icon: Truck, color: 'text-foreground' },
   { value: 'delivered', label: 'Delivered', icon: CheckCircle, color: 'text-success' },

@@ -177,7 +177,12 @@ export default function AccountPage() {
         }
       }
     } catch (e: any) {
-      setAuthError(e.message || 'Something went wrong. Please try again.');
+      const msg = e.message || '';
+      if (msg.toLowerCase().includes('rate limit') || msg.toLowerCase().includes('email rate') || msg.toLowerCase().includes('too many')) {
+        setAuthError('High traffic — please continue with Google.');
+      } else {
+        setAuthError(msg || 'Something went wrong. Please try again.');
+      }
     } finally {
       setSigningIn(false);
     }

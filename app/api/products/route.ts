@@ -6,6 +6,9 @@ import { mapProduct, toRow } from '@/lib/supabase/mappers';
 import type { Product } from '@/lib/types';
 import { requireAdmin } from '@/lib/admin-auth';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 let supabase: ReturnType<typeof createSupabaseClient> | null = null;
 function getSupabase() {
   if (!supabase) supabase = createSupabaseClient();

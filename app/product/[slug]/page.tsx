@@ -55,17 +55,18 @@ export default function ProductPage() {
   useEffect(() => {
     async function fetchProduct() {
       try {
-        const res = await fetch(`/api/products?slug=${slug}`);
+        const res = await fetch(`/api/products?slug=${slug}`, { cache: 'no-store' });
         const json = await res.json();
         if (json.products) {
           setProduct(json.products);
+        } else {
+          setProduct(getProductBySlug(slug));
         }
-      } catch {}
-      // Fallback
-      if (!product) {
+      } catch {
         setProduct(getProductBySlug(slug));
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchProduct();
   }, [slug]);

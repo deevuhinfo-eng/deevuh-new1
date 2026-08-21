@@ -134,7 +134,6 @@ export default function AdminReviewsPage() {
                       </div>
                     </td>
                     <td className="p-4">
-                      {review.title && <p className="text-xs font-semibold">{review.title}</p>}
                       <p className="text-xs leading-relaxed text-muted-foreground">{review.body}</p>
                     </td>
                     <td className="p-4 text-xs text-muted-foreground">{new Date(review.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</td>

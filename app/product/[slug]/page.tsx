@@ -446,7 +446,6 @@ export default function ProductPage() {
                         <Star key={i} className={cn('h-3.5 w-3.5', i < r.rating ? 'fill-foreground text-foreground' : 'text-muted-foreground/30')} />
                       ))}
                     </div>
-                    {r.title && <p className="mt-3 text-sm font-semibold">{r.title}</p>}
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{r.body}</p>
                   </div>
                 ))}
@@ -477,7 +476,7 @@ export default function ProductPage() {
 
               {!reviewSubmitted && (
                 <form onSubmit={submitReview} className="mt-5 space-y-4">
-                  <div>
+<div>
                     <p className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Your Rating</p>
                     <div className="flex items-center gap-1">
                       {Array.from({ length: 5 }).map((_, i) => (
@@ -491,15 +490,6 @@ export default function ProductPage() {
                         </button>
                       ))}
                     </div>
-                  </div>
-                  <div>
-                    <input
-                      value={reviewForm.title}
-                      onChange={(e) => setReviewForm((f) => ({ ...f, title: e.target.value }))}
-                      placeholder="Title (optional)"
-                      maxLength={80}
-                      className="w-full rounded-lg border border-border bg-transparent px-4 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground"
-                    />
                   </div>
                   <div>
                     <textarea
